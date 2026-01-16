@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบ Clean Data - แสดงข้อมูลทั้งหมดและแก้ไขในเว็บได้</title>
+    <title>ระบบ Clean Data - เลือกคอลัมน์และตรวจสอบด้วย AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
@@ -972,13 +972,99 @@
             align-items: center;
             gap: 8px;
         }
+        
+        /* Modal สำหรับเลือกคอลัมน์ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 500;
+        }
+        
+        .modal-btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .modal-btn-secondary {
+            background-color: #f8f9fa;
+            color: var(--dark-color);
+            border: 1px solid #ddd;
+        }
+        
+        .selected-count {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .column-check-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .column-check-item:hover {
+            background-color: #f8f9fa;
+            border-color: var(--primary-color);
+        }
+        
+        .column-check-item.selected {
+            background-color: rgba(67, 97, 238, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .selected-columns-summary {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #4caf50;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1><i class="fas fa-database"></i> ระบบ Clean Data</h1>
-            <p class="subtitle">ระบบสำหรับทำความสะอาดข้อมูลจากไฟล์ CSV อัตโนมัติด้วย AI - แสดงข้อมูลทั้งหมดและแก้ไขในเว็บได้</p>
+            <p class="subtitle">ระบบสำหรับทำความสะอาดข้อมูลจากไฟล์ CSV อัตโนมัติด้วย AI - เลือกคอลัมน์ที่ต้องการก่อนกำหนดประเภทข้อมูล</p>
         </header>
         
         <div class="main-content">
@@ -1001,6 +1087,7 @@
                     <p><strong>ขนาดไฟล์:</strong> <span id="fileSize">-</span></p>
                     <p><strong>จำนวนแถว:</strong> <span id="fileRows">-</span></p>
                     <p><strong>จำนวนคอลัมน์:</strong> <span id="fileCols">-</span></p>
+                    <p><strong>เลือกคอลัมน์แล้ว:</strong> <span id="selectedColumnsCount">0</span> คอลัมน์</p>
                 </div>
                 
                 <div id="loadingSpinner" class="spinner" style="display: none;"></div>
@@ -1009,12 +1096,20 @@
                     <button class="btn btn-success" id="processBtn" disabled>
                         <i class="fas fa-cogs"></i> เริ่มประมวลผลด้วย AI
                     </button>
-                    <button class="btn btn-primary" id="configureBtn">
+                    <button class="btn btn-primary" id="configureBtn" disabled>
                         <i class="fas fa-sliders-h"></i> กำหนดประเภทข้อมูล
+                    </button>
+                    <button class="btn btn-outline" id="selectColumnsBtn">
+                        <i class="fas fa-columns"></i> เลือกคอลัมน์
                     </button>
                     <button class="btn btn-warning" id="resetBtn">
                         <i class="fas fa-redo"></i> ล้างข้อมูล
                     </button>
+                </div>
+                
+                <div class="selected-columns-summary" id="selectedColumnsSummary" style="display: none;">
+                    <h4><i class="fas fa-check-circle"></i> คอลัมน์ที่เลือก</h4>
+                    <p id="selectedColumnsList">ยังไม่ได้เลือกคอลัมน์</p>
                 </div>
             </div>
             
@@ -1029,10 +1124,10 @@
         
         <div class="data-type-config" id="dataTypeConfig">
             <h2 class="section-title"><i class="fas fa-sliders-h"></i> กำหนดประเภทข้อมูล</h2>
-            <p>กำหนดประเภทข้อมูลสำหรับแต่ละคอลัมน์เพื่อให้ระบบตรวจสอบได้ถูกต้อง</p>
+            <p>กำหนดประเภทข้อมูลสำหรับคอลัมน์ที่เลือกเพื่อให้ระบบตรวจสอบได้ถูกต้อง</p>
             
             <div class="config-summary">
-                <h4><i class="fas fa-info-circle"></i> ข้อมูลตัวอย่างที่ต้องกำหนด</h4>
+                <h4><i class="fas fa-info-circle"></i> กำหนดข้อมูลสำหรับคอลัมน์ที่เลือก</h4>
                 <p>ใช้ตัวอย่างข้อมูลที่ให้มาเป็นแนวทางในการกำหนดประเภทข้อมูล</p>
                 <div class="type-legend">
                     <div class="legend-item">
@@ -1147,7 +1242,7 @@
                 <button class="btn btn-primary" id="showDataTypeBtn">
                     <i class="fas fa-info-circle"></i> แสดงประเภทข้อมูล
                 </button>
-                <button class="btn btn-outline" id="showReportBtn">
+                <button class="btn btn-outline" id="showReportBtn" disabled>
                     <i class="fas fa-file-alt"></i> แสดงรายงานการแก้ไข
                 </button>
             </div>
@@ -1311,7 +1406,7 @@
         </div>
         
         <footer>
-            <p>© 2023 ระบบ Clean Data - แสดงข้อมูลทั้งหมดและแก้ไขในเว็บได้</p>
+            <p>© 2023 ระบบ Clean Data - เลือกคอลัมน์และตรวจสอบด้วย AI</p>
         </footer>
     </div>
 
@@ -1320,18 +1415,24 @@
         const stepsData = [
             {
                 number: 1,
-                title: "กำหนดประเภทข้อมูลและเงื่อนไข",
-                items: ["กำหนดประเภทข้อมูลแต่ละคอลัมน์", "กำหนดรูปแบบข้อมูล", "กำหนดหน่วยวัดข้อมูล"],
-                aiFeature: true
+                title: "เลือกคอลัมน์ที่ต้องการใช้งาน",
+                items: ["เลือกเฉพาะคอลัมน์ที่ต้องการทำความสะอาด", "ลดจำนวนข้อมูลที่ต้องประมวลผล"],
+                aiFeature: false
             },
             {
                 number: 2,
+                title: "กำหนดประเภทข้อมูลและเงื่อนไข",
+                items: ["กำหนดประเภทข้อมูลแต่ละคอลัมน์", "กำหนดรูปแบบข้อมูล", "กำหนดหน่วยวัดข้อมูล"],
+                aiFeature: false
+            },
+            {
+                number: 3,
                 title: "รับไฟล์เข้าระบบ clean data",
                 items: ["ประเภทของไฟล์ CSV", "ตรวจสอบโครงสร้างไฟล์"],
                 aiFeature: false
             },
             {
-                number: 3,
+                number: 4,
                 title: "AI ช่วยตรวจสอบข้อมูลตามเงื่อนไข",
                 items: [
                     "ตรวจข้อมูลซ้ำ",
@@ -1342,7 +1443,7 @@
                 aiFeature: true
             },
             {
-                number: 4,
+                number: 5,
                 title: "AI ช่วยแก้ไขข้อผิดพลาดได้",
                 items: [
                     "ช่วยปรับค่าที่เขียนต่างกันแต่ความหมายเดียวกัน",
@@ -1352,13 +1453,13 @@
                 aiFeature: true
             },
             {
-                number: 5,
+                number: 6,
                 title: "AI สรุปข้อมูลผิด",
                 items: ["แสดงผลเป็น dashboard", "แยกประเภทข้อผิดพลาด", "แสดงข้อมูลตามประเภทข้อมูล"],
                 aiFeature: true
             },
             {
-                number: 6,
+                number: 7,
                 title: "Error Categorization",
                 items: [
                     "การแสดงผลประเภทของปัญหาที่พบ (เช่น ข้อมูลซ้ำ, ข้อมูลว่าง, รูปแบบผิด, ประเภทผิด)",
@@ -1458,6 +1559,7 @@
         let processedData = null;
         let allDataRows = []; // เก็บข้อมูลทั้งหมด
         let displayedColumns = []; // คอลัมน์ที่กำลังแสดง
+        let selectedColumns = []; // คอลัมน์ที่เลือกใช้งาน
         let isEditMode = false; // โหมดแก้ไข
         let editedCells = new Map(); // เก็บเซลล์ที่แก้ไขแล้ว
         let dataTypeConfigurations = {}; // เก็บการกำหนดประเภทข้อมูล
@@ -1471,10 +1573,14 @@
         const fileSize = document.getElementById('fileSize');
         const fileRows = document.getElementById('fileRows');
         const fileCols = document.getElementById('fileCols');
+        const selectedColumnsCount = document.getElementById('selectedColumnsCount');
+        const selectedColumnsSummary = document.getElementById('selectedColumnsSummary');
+        const selectedColumnsList = document.getElementById('selectedColumnsList');
         const browseBtn = document.getElementById('browseBtn');
         const processBtn = document.getElementById('processBtn');
         const resetBtn = document.getElementById('resetBtn');
         const configureBtn = document.getElementById('configureBtn');
+        const selectColumnsBtn = document.getElementById('selectColumnsBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const dataPreview = document.getElementById('dataPreview');
         const dataTypeConfig = document.getElementById('dataTypeConfig');
@@ -1596,19 +1702,182 @@
             return result;
         }
         
-        // ฟังก์ชันสร้างตารางกำหนดประเภทข้อมูล
-        function createDataTypeTable(headers) {
-            dataTypeTableBody.innerHTML = '';
-            
-            // ถ้าเคยกำหนดค่าไว้แล้ว ให้โหลดค่าเดิม
-            let configs = {};
-            if (Object.keys(dataTypeConfigurations).length > 0) {
-                configs = dataTypeConfigurations;
+        // ฟังก์ชันแสดงการเลือกคอลัมน์
+        function showColumnSelectionStep() {
+            if (!uploadedData) {
+                alert('กรุณาอัปโหลดไฟล์ก่อนเลือกคอลัมน์');
+                return;
             }
             
-            headers.forEach((header, index) => {
+            // สร้าง modal สำหรับเลือกคอลัมน์
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2 style="color: var(--secondary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-columns"></i> เลือกคอลัมน์ที่ต้องการใช้งาน
+                    </h2>
+                    <p style="margin-bottom: 20px; color: #666;">
+                        เลือกคอลัมน์ที่ต้องการทำความสะอาดข้อมูล ระบบจะกำหนดประเภทข้อมูลเฉพาะคอลัมน์ที่เลือกเท่านั้น
+                    </p>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <button id="selectAllCols" class="btn btn-sm btn-primary" style="margin-right: 10px;">
+                            <i class="fas fa-check-square"></i> เลือกทั้งหมด
+                        </button>
+                        <button id="deselectAllCols" class="btn btn-sm btn-warning" style="margin-right: 10px;">
+                            <i class="fas fa-times-circle"></i> ยกเลิกทั้งหมด
+                        </button>
+                        <span style="color: #666; font-size: 0.9rem;">
+                            เลือกแล้ว <span id="selectedCount" class="selected-count">0</span> จาก ${uploadedData.headers.length} คอลัมน์
+                        </span>
+                    </div>
+                    
+                    <div id="columnSelectionList" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                        gap: 10px;
+                        max-height: 400px;
+                        overflow-y: auto;
+                        padding: 10px;
+                        border: 1px solid #eee;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                    ">
+                        <!-- คอลัมน์จะถูกเพิ่มด้วย JavaScript -->
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button id="cancelColumnSelection" class="modal-btn modal-btn-secondary">
+                            ยกเลิก
+                        </button>
+                        <button id="confirmColumnSelection" class="modal-btn modal-btn-primary">
+                            <i class="fas fa-arrow-right"></i> ดำเนินการต่อ
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // เติมรายการคอลัมน์
+            const columnList = modal.querySelector('#columnSelectionList');
+            uploadedData.headers.forEach((column, index) => {
+                const columnItem = document.createElement('div');
+                columnItem.className = 'column-check-item';
+                if (selectedColumns.includes(column)) {
+                    columnItem.classList.add('selected');
+                }
+                
+                const checkboxId = `col-select-${index}`;
+                columnItem.innerHTML = `
+                    <input type="checkbox" id="${checkboxId}" style="margin: 0;" ${selectedColumns.includes(column) ? 'checked' : ''}>
+                    <label for="${checkboxId}" style="cursor: pointer; flex-grow: 1;">${column}</label>
+                `;
+                
+                columnList.appendChild(columnItem);
+            });
+            
+            // Event listeners
+            modal.querySelector('#selectAllCols').addEventListener('click', () => {
+                modal.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = true;
+                    checkbox.parentElement.classList.add('selected');
+                });
+                updateSelectedCount();
+            });
+            
+            modal.querySelector('#deselectAllCols').addEventListener('click', () => {
+                modal.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.parentElement.classList.remove('selected');
+                });
+                updateSelectedCount();
+            });
+            
+            modal.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        this.parentElement.classList.add('selected');
+                    } else {
+                        this.parentElement.classList.remove('selected');
+                    }
+                    updateSelectedCount();
+                });
+            });
+            
+            function updateSelectedCount() {
+                const selected = modal.querySelectorAll('input[type="checkbox"]:checked').length;
+                modal.querySelector('#selectedCount').textContent = selected;
+            }
+            
+            modal.querySelector('#cancelColumnSelection').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            
+            modal.querySelector('#confirmColumnSelection').addEventListener('click', () => {
+                const newSelectedColumns = [];
+                modal.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                    const index = parseInt(checkbox.id.split('-')[2]);
+                    newSelectedColumns.push(uploadedData.headers[index]);
+                });
+                
+                if (newSelectedColumns.length === 0) {
+                    alert('กรุณาเลือกอย่างน้อย 1 คอลัมน์');
+                    return;
+                }
+                
+                selectedColumns = newSelectedColumns;
+                updateSelectedColumnsUI();
+                
+                document.body.removeChild(modal);
+                
+                // แสดงขั้นตอนที่ 1 เสร็จสมบูรณ์
+                updateStepStatus(1, 'completed');
+                updateStepStatus(2, 'active');
+                
+                alert(`✅ เลือกคอลัมน์เสร็จสิ้น\n\nเลือก ${selectedColumns.length} คอลัมน์จากทั้งหมด ${uploadedData.headers.length} คอลัมน์\n\nตอนนี้คุณสามารถกำหนดประเภทข้อมูลได้แล้ว`);
+                
+                // เปิดใช้งานปุ่มกำหนดประเภทข้อมูล
+                configureBtn.disabled = false;
+            });
+            
+            // อัพเดทจำนวนที่เลือก
+            updateSelectedCount();
+        }
+        
+        // อัพเดท UI แสดงคอลัมน์ที่เลือก
+        function updateSelectedColumnsUI() {
+            selectedColumnsCount.textContent = selectedColumns.length;
+            
+            if (selectedColumns.length > 0) {
+                selectedColumnsSummary.style.display = 'block';
+                selectedColumnsList.textContent = selectedColumns.join(', ');
+                if (selectedColumns.length > 5) {
+                    selectedColumnsList.textContent = selectedColumns.slice(0, 5).join(', ') + ` และอีก ${selectedColumns.length - 5} คอลัมน์`;
+                }
+            } else {
+                selectedColumnsSummary.style.display = 'none';
+            }
+        }
+        
+        // ฟังก์ชันแสดงการกำหนดประเภทข้อมูลเฉพาะคอลัมน์ที่เลือก
+        function showDataTypeConfigForSelectedColumns() {
+            if (!uploadedData || selectedColumns.length === 0) {
+                alert('กรุณาเลือกคอลัมน์ก่อนกำหนดประเภทข้อมูล');
+                showColumnSelectionStep();
+                return;
+            }
+            
+            dataTypeConfig.classList.add('show');
+            
+            // สร้างตารางเฉพาะคอลัมน์ที่เลือก
+            dataTypeTableBody.innerHTML = '';
+            
+            selectedColumns.forEach((header, index) => {
                 const row = document.createElement('tr');
-                const config = configs[header] || {};
+                const config = dataTypeConfigurations[header] || {};
                 
                 // ค้นหาค่าจากตัวอย่างข้อมูล
                 const sampleConfig = sampleDataConfig.find(item => item.column === header);
@@ -1657,23 +1926,6 @@
                     updateFormatOptions(this.value, formatSelect);
                 });
             });
-        }
-        
-        // ฟังก์ชันอัพเดทตัวเลือกรูปแบบ
-        function updateFormatOptions(type, formatSelect, selectedFormat = '') {
-            formatSelect.innerHTML = '<option value="">เลือกรูปแบบ</option>';
-            
-            if (dataFormats[type]) {
-                dataFormats[type].forEach(format => {
-                    const option = document.createElement('option');
-                    option.value = format;
-                    option.textContent = format;
-                    if (format === selectedFormat) {
-                        option.selected = true;
-                    }
-                    formatSelect.appendChild(option);
-                });
-            }
         }
         
         // ฟังก์ชันดึงค่าตัวอย่างสำหรับคอลัมน์
@@ -1736,13 +1988,30 @@
             return names[type] || type;
         }
         
+        // ฟังก์ชันอัพเดทตัวเลือกรูปแบบ
+        function updateFormatOptions(type, formatSelect, selectedFormat = '') {
+            formatSelect.innerHTML = '<option value="">เลือกรูปแบบ</option>';
+            
+            if (dataFormats[type]) {
+                dataFormats[type].forEach(format => {
+                    const option = document.createElement('option');
+                    option.value = format;
+                    option.textContent = format;
+                    if (format === selectedFormat) {
+                        option.selected = true;
+                    }
+                    formatSelect.appendChild(option);
+                });
+            }
+        }
+        
         // ฟังก์ชันบันทึกการกำหนดประเภทข้อมูล
         function saveDataTypeConfig() {
             const configs = {};
             let hasError = false;
             let errorMessages = [];
             
-            // ดึงค่าจากฟอร์ม
+            // ดึงค่าจากฟอร์ม (เฉพาะคอลัมน์ที่เลือก)
             document.querySelectorAll('.type-select').forEach(select => {
                 const column = select.dataset.column;
                 const type = select.value;
@@ -1762,6 +2031,18 @@
                 };
             });
             
+            // เก็บเฉพาะคอลัมน์ที่เลือก
+            selectedColumns.forEach(column => {
+                if (!configs[column]) {
+                    configs[column] = {
+                        type: 'text',
+                        format: 'String',
+                        unit: '',
+                        displayName: 'Text (ข้อความ)'
+                    };
+                }
+            });
+            
             if (hasError) {
                 alert(`❌ พบข้อผิดพลาด:\n${errorMessages.join('\n')}`);
                 return;
@@ -1778,17 +2059,24 @@
             // เปิดใช้งานปุ่มประมวลผล
             processBtn.disabled = false;
             
+            // อัพเดทขั้นตอนที่ 2 เสร็จสมบูรณ์
+            updateStepStatus(2, 'completed');
+            updateStepStatus(3, 'active');
+            
             alert(`✅ บันทึกการกำหนดประเภทข้อมูลสำเร็จ\n\nกำหนดค่าสำหรับ ${Object.keys(configs).length} คอลัมน์\n\nคุณสามารถเริ่มประมวลผลด้วย AI ได้แล้ว`);
         }
         
         // ฟังก์ชันแสดงสรุปการกำหนดค่า
         function showConfigSummary() {
             const typeCount = {};
-            Object.values(dataTypeConfigurations).forEach(config => {
-                typeCount[config.type] = (typeCount[config.type] || 0) + 1;
+            selectedColumns.forEach(column => {
+                const config = dataTypeConfigurations[column];
+                if (config) {
+                    typeCount[config.type] = (typeCount[config.type] || 0) + 1;
+                }
             });
             
-            let summary = `สรุปการกำหนดประเภทข้อมูล:\n`;
+            let summary = `สรุปการกำหนดประเภทข้อมูล (${selectedColumns.length} คอลัมน์):\n`;
             Object.keys(typeCount).forEach(type => {
                 summary += `- ${getTypeDisplayName(type)}: ${typeCount[type]} คอลัมน์\n`;
             });
@@ -1796,7 +2084,7 @@
             console.log(summary);
         }
         
-        // ฟังก์ชันตรวจสอบข้อมูลด้วย AI (รวมการตรวจสอบตามประเภทข้อมูล)
+        // ฟังก์ชันตรวจสอบข้อมูลด้วย AI (ตรวจสอบเฉพาะคอลัมน์ที่เลือก)
         function analyzeDataWithAI(data) {
             // จำลองการตรวจสอบด้วย AI
             const analyzedData = JSON.parse(JSON.stringify(data));
@@ -1814,9 +2102,9 @@
                 issuesList: [] // รายการปัญหา
             };
             
-            // ตรวจสอบข้อมูลว่าง
+            // ตรวจสอบข้อมูลเฉพาะคอลัมน์ที่เลือก
             analyzedData.data.forEach((row, rowIndex) => {
-                Object.keys(row).forEach(key => {
+                selectedColumns.forEach(key => {
                     if (key !== '_rowNumber' && (!row[key] || row[key].trim() === '')) {
                         row[`${key}_issue`] = 'empty';
                         issues.empty++;
@@ -1849,7 +2137,7 @@
             
             sampleRows.forEach((row, index) => {
                 // สร้าง key สำหรับตรวจสอบข้อมูลซ้ำ
-                const rowKey = JSON.stringify(row);
+                const rowKey = selectedColumns.map(col => row[col] || '').join('|');
                 if (seenRows.has(rowKey)) {
                     duplicateIndices.push(index);
                     issues.duplicates++;
@@ -1879,7 +2167,7 @@
             // ตรวจสอบรูปแบบข้อมูลตามประเภทที่กำหนด
             if (Object.keys(dataTypeConfigurations).length > 0) {
                 analyzedData.data.forEach((row, rowIndex) => {
-                    Object.keys(row).forEach(key => {
+                    selectedColumns.forEach(key => {
                         if (key !== '_rowNumber' && row[key]) {
                             const config = dataTypeConfigurations[key];
                             if (config) {
@@ -1958,7 +2246,7 @@
             }
             
             // คำนวณเปอร์เซ็นต์ (ประมาณการจากตัวอย่าง)
-            const sampleCells = sampleRows.length * analyzedData.headers.length;
+            const sampleCells = sampleRows.length * selectedColumns.length;
             issues.emptyPercent = sampleCells > 0 ? Math.round((issues.empty / sampleCells) * 100) : 0;
             issues.duplicatePercent = sampleRows.length > 0 ? Math.round((issues.duplicates / sampleRows.length) * 100) : 0;
             issues.formatPercent = sampleRows.length > 0 ? Math.round((issues.format / sampleRows.length) * 100) : 0;
@@ -1969,8 +2257,8 @@
             const totalSampleDataPoints = sampleRows.length * 4; // 4 ประเภทการตรวจสอบ
             issues.correctPercent = 100 - Math.min(100, Math.round((totalIssues / totalSampleDataPoints) * 100));
             
-            // คำนวณสถานะคอลัมน์
-            analyzedData.headers.forEach(header => {
+            // คำนวณสถานะคอลัมน์เฉพาะที่เลือก
+            selectedColumns.forEach(header => {
                 if (issues.columnIssues[header]) {
                     if (issues.columnIssues[header].length >= 2) {
                         issues.errorColumns++;
@@ -1991,7 +2279,7 @@
             };
         }
         
-        // ฟังก์ชันสร้าง column selector
+        // ฟังก์ชันสร้าง column selector สำหรับเลือกคอลัมน์ที่จะแสดง
         function createColumnSelector(headers) {
             columnList.innerHTML = '';
             
@@ -2001,7 +2289,7 @@
                 
                 const checkboxId = `col-${index}`;
                 columnItem.innerHTML = `
-                    <input type="checkbox" class="column-checkbox" id="${checkboxId}" checked>
+                    <input type="checkbox" class="column-checkbox" id="${checkboxId}" ${selectedColumns.includes(header) ? 'checked' : 'disabled'}>
                     <label for="${checkboxId}">${header}</label>
                 `;
                 
@@ -2009,15 +2297,15 @@
             });
             
             // คอลัมน์ที่แสดงทั้งหมดเริ่มต้น
-            displayedColumns = [...headers];
+            displayedColumns = selectedColumns.length > 0 ? [...selectedColumns] : [...headers.slice(0, 10)];
         }
         
-        // ฟังก์ชันแสดงข้อมูลในตาราง (แสดงคอลัมน์ที่เลือก)
+        // ฟังก์ชันแสดงข้อมูลในตาราง (แสดงเฉพาะคอลัมน์ที่เลือก)
         function displayDataTable(data, issues, columnsToShow = null) {
             dataTable.innerHTML = '';
             
-            // ใช้คอลัมน์ที่เลือกหรือคอลัมน์ทั้งหมด
-            const columns = columnsToShow || data.headers;
+            // ใช้คอลัมน์ที่เลือก
+            const columns = selectedColumns.length > 0 ? selectedColumns : (columnsToShow || data.headers.slice(0, 10));
             
             // เก็บข้อมูลทั้งหมด
             allDataRows = data.data;
@@ -2148,7 +2436,7 @@
             
             // อัพเดทจำนวนแถวและคอลัมน์
             rowCount.textContent = `${data.totalRows} แถว (แสดง ${displayRows.length} แถวแรก)`;
-            colCount.textContent = `${data.headers.length} คอลัมน์ (แสดง ${columns.length} คอลัมน์)`;
+            colCount.textContent = `${selectedColumns.length} คอลัมน์ (จากทั้งหมด ${data.headers.length} คอลัมน์)`;
             
             // แสดงข้อความเลื่อนถ้ามีคอลัมน์มาก
             if (columns.length > 10) {
@@ -2244,7 +2532,7 @@
         
         // ฟังก์ชันดาวน์โหลดไฟล์ CSV
         function downloadCSV() {
-            if (!uploadedData) return;
+            if (!uploadedData || selectedColumns.length === 0) return;
             
             const downloadOption = document.querySelector('input[name="downloadOption"]:checked').value;
             let csvContent = '';
@@ -2264,17 +2552,17 @@
                 
                 fileName = `report_${fileName.textContent || 'data'}.csv`;
             } else {
-                // ดาวน์โหลดข้อมูล
+                // ดาวน์โหลดข้อมูลเฉพาะคอลัมน์ที่เลือก
                 const includeAllData = downloadOption === 'all';
                 
                 // สร้าง headers รวมคอลัมน์เพิ่มเติม
-                const baseHeaders = uploadedData.headers;
+                const baseHeaders = selectedColumns;
                 const extraHeaders = ['_status', '_issues', '_corrections', '_recommendations'];
                 const allHeaders = [...baseHeaders, ...extraHeaders];
                 
                 csvContent = BOM + allHeaders.join(',') + '\n';
                 
-                // สร้างข้อมูล
+                // สร้างข้อมูลเฉพาะคอลัมน์ที่เลือก
                 uploadedData.data.forEach((row, rowIndex) => {
                     const rowData = [...baseHeaders.map(header => row[header] || '')];
                     
@@ -2322,7 +2610,7 @@
                     }
                 });
                 
-                fileName = `${downloadOption === 'cleaned' ? 'cleaned_' : ''}${fileName.textContent || 'data'}.csv`;
+                fileName = `${downloadOption === 'cleaned' ? 'cleaned_' : ''}${fileName.textContent || 'data'}_${selectedColumns.length}_columns.csv`;
             }
             
             // สร้าง Blob และดาวน์โหลด
@@ -2350,12 +2638,12 @@
                 
                 message += `ข้อมูลประกอบด้วย:\n`;
                 message += `- ${totalRows} แถวข้อมูลทั้งหมด\n`;
+                message += `- ${selectedColumns.length} คอลัมน์ที่เลือก\n`;
                 
                 if (downloadOption === 'cleaned') {
                     message += `- ${cleanedRows} แถวที่ถูกต้อง\n`;
                     message += `- ${totalRows - cleanedRows} แถวที่มีปัญหาถูกตัดออก\n`;
                 } else {
-                    message += `- ${uploadedData.headers.length} คอลัมน์หลัก\n`;
                     message += `- 4 คอลัมน์เพิ่มเติมสำหรับติดตามสถานะ\n`;
                 }
             }
@@ -2617,11 +2905,26 @@
         
         // ฟังก์ชันประมวลผลทั้งหมด
         async function processData() {
-            if (!uploadedData) return;
+            if (!uploadedData) {
+                alert('กรุณาอัปโหลดไฟล์ CSV ก่อน');
+                return;
+            }
+            
+            if (selectedColumns.length === 0) {
+                alert('กรุณาเลือกคอลัมน์ที่ต้องการใช้งานก่อน');
+                showColumnSelectionStep();
+                return;
+            }
+            
+            if (Object.keys(dataTypeConfigurations).length === 0) {
+                alert('กรุณากำหนดประเภทข้อมูลสำหรับคอลัมน์ที่เลือกก่อน');
+                showDataTypeConfigForSelectedColumns();
+                return;
+            }
             
             // รีเซ็ตขั้นตอนทั้งหมด
             stepsData.forEach((step, index) => {
-                updateStepStatus(step.number, index === 0 ? 'active' : '');
+                updateStepStatus(step.number, index === 2 ? 'active' : '');
             });
             
             // แสดง loading
@@ -2629,41 +2932,56 @@
             processBtn.disabled = true;
             
             try {
-                // ขั้นตอนที่ 1: กำหนดเงื่อนไข (จำลอง)
-                await simulateProcessing(1);
-                updateStepStatus(1, 'completed');
-                updateStepStatus(2, 'active');
-                
-                // ขั้นตอนที่ 2: รับไฟล์ (ทำแล้ว)
-                await simulateProcessing(2);
-                updateStepStatus(2, 'completed');
-                updateStepStatus(3, 'active');
-                
-                // ขั้นตอนที่ 3: AI ตรวจสอบ
+                // ขั้นตอนที่ 3: รับไฟล์ (ทำแล้ว)
                 await simulateProcessing(3);
                 updateStepStatus(3, 'completed');
                 updateStepStatus(4, 'active');
                 
-                // ขั้นตอนที่ 4: AI แก้ไข
+                // ขั้นตอนที่ 4: AI ตรวจสอบ
                 await simulateProcessing(4);
                 updateStepStatus(4, 'completed');
                 updateStepStatus(5, 'active');
                 
-                // ขั้นตอนที่ 5: AI สรุป
-                processedData = analyzeDataWithAI(uploadedData);
-                displayDataTable(processedData.data, processedData.issues);
+                // ขั้นตอนที่ 5: AI แก้ไข
+                // จำลองการตรวจสอบด้วย AI เฉพาะคอลัมน์ที่เลือก
+                const filteredData = {
+                    headers: selectedColumns,
+                    data: uploadedData.data.map(row => {
+                        const filteredRow = { _rowNumber: row._rowNumber };
+                        selectedColumns.forEach(col => {
+                            filteredRow[col] = row[col] || '';
+                        });
+                        return filteredRow;
+                    }),
+                    totalRows: uploadedData.totalRows,
+                    rawText: uploadedData.rawText
+                };
+                
+                processedData = analyzeDataWithAI(filteredData);
+                
+                // แสดงข้อมูลเฉพาะคอลัมน์ที่เลือก
+                displayDataTable(processedData.data, processedData.issues, selectedColumns);
+                createColumnSelector(uploadedData.headers);
+                
+                // แสดง data preview
+                dataPreview.style.display = 'block';
                 
                 await simulateProcessing(5);
                 updateStepStatus(5, 'completed');
                 updateStepStatus(6, 'active');
                 
-                // ขั้นตอนที่ 6: Error Categorization
+                // ขั้นตอนที่ 6: AI สรุป
                 updateDashboard(processedData.issues);
                 
                 await simulateProcessing(6);
                 updateStepStatus(6, 'completed');
+                updateStepStatus(7, 'active');
                 
-                // เปิดใช้งานปุ่มดาวน์โหลด
+                // ขั้นตอนที่ 7: Error Categorization
+                await simulateProcessing(7);
+                updateStepStatus(7, 'completed');
+                
+                // เปิดใช้งานปุ่มดาวน์โหลดและแสดงรายงาน
                 downloadBtn.disabled = false;
                 showReportBtn.disabled = false;
                 
@@ -2689,7 +3007,7 @@
         
         // ฟังก์ชันแสดงสรุป
         function showSummary(issues) {
-            alert(`✅ AI ประมวลผลข้อมูลเสร็จสิ้น!\n\n📊 ผลการตรวจสอบ (จากตัวอย่าง ${issues.totalRows} แถว):\n- ข้อมูลว่าง: ${issues.emptyPercent}%\n- ข้อมูลซ้ำ: ${issues.duplicatePercent}%\n- รูปแบบผิด: ${issues.formatPercent}%\n- ประเภทผิด: ${issues.typePercent}%\n- ข้อมูลถูกต้อง: ${issues.correctPercent}%\n\n📈 สถานะคอลัมน์:\n- ✅ ถูกต้อง: ${issues.validColumns} คอลัมน์\n- ⚠️ ต้องตรวจสอบ: ${issues.checkColumns} คอลัมน์\n- ❌ มีข้อผิดพลาด: ${issues.errorColumns} คอลัมน์\n\n💾 คุณสามารถดาวน์โหลดไฟล์ที่ clean แล้วได้เลย`);
+            alert(`✅ AI ประมวลผลข้อมูลเสร็จสิ้น!\n\n📊 ผลการตรวจสอบ (${selectedColumns.length} คอลัมน์ที่เลือก):\n- ข้อมูลว่าง: ${issues.emptyPercent}%\n- ข้อมูลซ้ำ: ${issues.duplicatePercent}%\n- รูปแบบผิด: ${issues.formatPercent}%\n- ประเภทผิด: ${issues.typePercent}%\n- ข้อมูลถูกต้อง: ${issues.correctPercent}%\n\n📈 สถานะคอลัมน์:\n- ✅ ถูกต้อง: ${issues.validColumns} คอลัมน์\n- ⚠️ ต้องตรวจสอบ: ${issues.checkColumns} คอลัมน์\n- ❌ มีข้อผิดพลาด: ${issues.errorColumns} คอลัมน์\n\n💾 คุณสามารถดาวน์โหลดไฟล์ที่ clean แล้วได้เลย`);
         }
         
         // ฟังก์ชันรีเซ็ต
@@ -2698,6 +3016,7 @@
             processedData = null;
             allDataRows = [];
             displayedColumns = [];
+            selectedColumns = [];
             isEditMode = false;
             editedCells.clear();
             dataTypeConfigurations = {};
@@ -2708,9 +3027,11 @@
             dashboardSection.classList.remove('show');
             downloadReport.classList.remove('show');
             processBtn.disabled = true;
+            configureBtn.disabled = true;
             downloadBtn.disabled = true;
             showReportBtn.disabled = true;
             fileInfo.classList.remove('show');
+            selectedColumnsSummary.style.display = 'none';
             columnSelector.classList.remove('show');
             editControls.classList.remove('show');
             editMessage.classList.remove('show');
@@ -2731,7 +3052,7 @@
                 updateStepStatus(step.number, '');
             });
             
-            currentStep = 1;
+            // เริ่มต้นเปิดขั้นตอนที่ 1
             updateStepStatus(1, 'active');
         }
         
@@ -2800,6 +3121,7 @@
                 // แสดง loading
                 loadingSpinner.style.display = 'block';
                 processBtn.disabled = true;
+                configureBtn.disabled = true;
                 
                 const csvContent = await readCSVFile(file);
                 uploadedData = parseCSV(csvContent);
@@ -2811,26 +3133,38 @@
                 fileCols.textContent = uploadedData.headers.length;
                 fileInfo.classList.add('show');
                 
-                // สร้าง column selector
-                createColumnSelector(uploadedData.headers);
+                // รีเซ็ตคอลัมน์ที่เลือก
+                selectedColumns = [];
+                updateSelectedColumnsUI();
                 
-                // แสดงข้อมูลทั้งหมด (แสดงแค่ 50 คอลัมน์แรกเพื่อเริ่มต้น)
-                const initialColumns = uploadedData.headers.slice(0, 50);
-                displayDataTable(uploadedData, null, initialColumns);
-                displayedColumns = initialColumns;
+                // แสดงขั้นตอนที่ 1 active
+                updateStepStatus(1, 'active');
                 
-                dataPreview.style.display = 'block';
+                // แสดงข้อความสำเร็จและเริ่มเลือกคอลัมน์
+                loadingSpinner.style.display = 'none';
                 
-                // แสดงปุ่มกำหนดประเภทข้อมูล
-                configureBtn.disabled = false;
+                alert(`✅ โหลดไฟล์ "${file.name}" สำเร็จ\n📊 พบ ${uploadedData.totalRows} แถว, ${uploadedData.headers.length} คอลัมน์\n\nโปรดเลือกคอลัมน์ที่ต้องการใช้งาน`);
                 
-                alert(`✅ โหลดไฟล์ "${file.name}" สำเร็จ\n📊 พบ ${uploadedData.totalRows} แถว, ${uploadedData.headers.length} คอลัมน์\n💡 ระบบแสดง ${initialColumns.length} คอลัมน์แรก (ใช้ปุ่มเลือกคอลัมน์เพื่อแสดงคอลัมน์ทั้งหมด)\n\n📋 กรุณากำหนดประเภทข้อมูลก่อนเริ่มประมวลผล`);
+                // แสดงการเลือกคอลัมน์ทันที
+                setTimeout(() => {
+                    showColumnSelectionStep();
+                }, 500);
+                
             } catch (error) {
                 alert(`❌ เกิดข้อผิดพลาด: ${error.message}`);
-            } finally {
                 loadingSpinner.style.display = 'none';
             }
         }
+        
+        // ปุ่มเลือกคอลัมน์
+        selectColumnsBtn.addEventListener('click', () => {
+            if (!uploadedData) {
+                alert('กรุณาอัปโหลดไฟล์ CSV ก่อนเลือกคอลัมน์');
+                return;
+            }
+            
+            showColumnSelectionStep();
+        });
         
         // ปุ่มกำหนดประเภทข้อมูล
         configureBtn.addEventListener('click', () => {
@@ -2839,16 +3173,24 @@
                 return;
             }
             
-            dataTypeConfig.classList.add('show');
-            createDataTypeTable(uploadedData.headers);
+            if (selectedColumns.length === 0) {
+                alert('กรุณาเลือกคอลัมน์ที่ต้องการใช้งานก่อนกำหนดประเภทข้อมูล');
+                showColumnSelectionStep();
+                return;
+            }
+            
+            showDataTypeConfigForSelectedColumns();
         });
         
         // ใช้การกำหนดจากตัวอย่าง
         applySampleConfigBtn.addEventListener('click', () => {
-            if (!uploadedData) return;
+            if (!uploadedData || selectedColumns.length === 0) {
+                alert('กรุณาเลือกคอลัมน์ก่อนใช้การกำหนดจากตัวอย่าง');
+                return;
+            }
             
-            // ตั้งค่าตามตัวอย่าง
-            uploadedData.headers.forEach((header, index) => {
+            // ตั้งค่าตามตัวอย่างเฉพาะคอลัมน์ที่เลือก
+            selectedColumns.forEach((header, index) => {
                 const sampleConfig = sampleDataConfig.find(item => item.column === header);
                 if (sampleConfig) {
                     const typeSelect = document.getElementById(`type-${index}`);
@@ -2863,7 +3205,7 @@
                 }
             });
             
-            alert('✅ ใช้การกำหนดประเภทข้อมูลจากตัวอย่างสำเร็จ\n\nระบบได้กำหนดประเภทข้อมูลตามตัวอย่างข้อมูลที่ให้มา คุณสามารถปรับแต่งเพิ่มเติมได้ก่อนบันทึก');
+            alert(`✅ ใช้การกำหนดประเภทข้อมูลจากตัวอย่างสำเร็จ\n\nกำหนดค่าสำหรับ ${selectedColumns.length} คอลัมน์ที่เลือก`);
         });
         
         // บันทึกการกำหนดค่า
@@ -2916,35 +3258,39 @@
         
         selectAllColumns.addEventListener('click', () => {
             document.querySelectorAll('.column-checkbox').forEach(checkbox => {
-                checkbox.checked = true;
+                if (!checkbox.disabled) {
+                    checkbox.checked = true;
+                }
             });
         });
         
         deselectAllColumns.addEventListener('click', () => {
             document.querySelectorAll('.column-checkbox').forEach(checkbox => {
-                checkbox.checked = false;
+                if (!checkbox.disabled) {
+                    checkbox.checked = false;
+                }
             });
         });
         
         applyColumnSelection.addEventListener('click', () => {
-            const selectedColumns = [];
+            const selectedToDisplay = [];
             document.querySelectorAll('.column-checkbox').forEach((checkbox, index) => {
-                if (checkbox.checked) {
-                    selectedColumns.push(uploadedData.headers[index]);
+                if (checkbox.checked && !checkbox.disabled) {
+                    selectedToDisplay.push(uploadedData.headers[index]);
                 }
             });
             
-            if (selectedColumns.length === 0) {
+            if (selectedToDisplay.length === 0) {
                 alert('กรุณาเลือกคอลัมน์อย่างน้อย 1 คอลัมน์');
                 return;
             }
             
-            displayedColumns = selectedColumns;
+            displayedColumns = selectedToDisplay;
             
             if (processedData) {
-                displayDataTable(processedData.data, processedData.issues, selectedColumns);
-            } else {
-                displayDataTable(uploadedData, null, selectedColumns);
+                displayDataTable(processedData.data, processedData.issues, selectedToDisplay);
+            } else if (uploadedData) {
+                displayDataTable(uploadedData, null, selectedToDisplay);
             }
             
             columnSelector.classList.remove('show');
@@ -2970,7 +3316,7 @@
         
         cancelEditBtn.addEventListener('click', cancelAllEdits);
         
-        // เปิดขั้นตอนแรกเมื่อคลิก
+        // เปิดขั้นตอนเมื่อคลิก
         document.querySelectorAll('.step-header').forEach(header => {
             header.addEventListener('click', () => {
                 const stepNumber = parseInt(header.dataset.step);
