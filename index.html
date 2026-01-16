@@ -670,6 +670,134 @@
             color: #7b1fa2;
         }
         
+        /* Download report section */
+        .download-report {
+            margin-top: 40px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            display: none;
+        }
+        
+        .download-report.show {
+            display: block;
+        }
+        
+        .report-summary {
+            background-color: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid #4caf50;
+        }
+        
+        .report-summary h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .report-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .report-details {
+            margin-top: 30px;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .report-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .report-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .report-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .report-table tr.requires-action {
+            background-color: #ffebee;
+        }
+        
+        .report-table tr.corrected {
+            background-color: #e8f5e9;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .status-corrected {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .action-required {
+            color: #c62828;
+            font-weight: bold;
+        }
+        
+        .action-recommendation {
+            background-color: #fff3e0;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            border-left: 3px solid #ff9800;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             h1 {
@@ -706,6 +834,10 @@
             
             .data-table {
                 min-width: 3000px;
+            }
+            
+            .report-stats {
+                flex-direction: column;
             }
         }
         
@@ -805,6 +937,40 @@
             gap: 15px;
             flex-wrap: wrap;
             margin-top: 10px;
+        }
+        
+        .download-options {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+        
+        .download-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .download-option input[type="radio"] {
+            margin-right: 5px;
+        }
+        
+        .download-note {
+            background-color: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .download-note h4 {
+            color: #ef6c00;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
     </style>
 </head>
@@ -981,6 +1147,79 @@
                 <button class="btn btn-primary" id="showDataTypeBtn">
                     <i class="fas fa-info-circle"></i> แสดงประเภทข้อมูล
                 </button>
+                <button class="btn btn-outline" id="showReportBtn">
+                    <i class="fas fa-file-alt"></i> แสดงรายงานการแก้ไข
+                </button>
+            </div>
+        </div>
+        
+        <div class="download-report" id="downloadReport">
+            <h2 class="section-title"><i class="fas fa-file-download"></i> รายงานการแก้ไขข้อมูล</h2>
+            
+            <div class="report-summary">
+                <h3><i class="fas fa-chart-bar"></i> สรุปการแก้ไขข้อมูล</h3>
+                <div class="report-stats" id="reportStats">
+                    <!-- สถิติจะถูกเพิ่มด้วย JavaScript -->
+                </div>
+            </div>
+            
+            <div class="report-details">
+                <h3><i class="fas fa-list-check"></i> รายละเอียดข้อมูลที่ต้องแก้ไข</h3>
+                <p>ข้อมูลต่อไปนี้ยังต้องได้รับการแก้ไขก่อนดาวน์โหลด (แสดงเป็นสีแดง)</p>
+                
+                <div class="data-table-container">
+                    <table class="report-table" id="reportTable">
+                        <thead>
+                            <tr>
+                                <th width="5%">แถว</th>
+                                <th width="15%">คอลัมน์</th>
+                                <th width="15%">ค่าปัจจุบัน</th>
+                                <th width="15%">สถานะ</th>
+                                <th width="30%">ปัญหาที่พบ</th>
+                                <th width="20%">คำแนะนำการแก้ไข</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <!-- รายงานจะถูกเพิ่มด้วย JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="download-options">
+                <h4><i class="fas fa-download"></i> ตัวเลือกการดาวน์โหลด</h4>
+                <div class="download-option">
+                    <input type="radio" id="downloadAll" name="downloadOption" value="all" checked>
+                    <label for="downloadAll"><strong>ดาวน์โหลดข้อมูลทั้งหมด</strong> - รวมข้อมูลที่แก้ไขแล้วและยังไม่แก้ไข (พร้อมรายงาน)</label>
+                </div>
+                <div class="download-option">
+                    <input type="radio" id="downloadCleaned" name="downloadOption" value="cleaned">
+                    <label for="downloadCleaned"><strong>ดาวน์โหลดเฉพาะข้อมูลที่ถูกต้อง</strong> - เฉพาะข้อมูลที่ไม่มีข้อผิดพลาดหรือแก้ไขแล้ว</label>
+                </div>
+                <div class="download-option">
+                    <input type="radio" id="downloadReportOnly" name="downloadOption" value="report">
+                    <label for="downloadReportOnly"><strong>ดาวน์โหลดรายงานเท่านั้น</strong> - เฉพาะรายงานการแก้ไข</label>
+                </div>
+                
+                <div class="download-note">
+                    <h4><i class="fas fa-exclamation-triangle"></i> หมายเหตุสำคัญ</h4>
+                    <p>ไฟล์ CSV ที่ดาวน์โหลดจะมีการเพิ่มคอลัมน์พิเศษเพื่อระบุสถานะการแก้ไข:</p>
+                    <ul style="margin-left: 20px; margin-top: 5px;">
+                        <li>คอลัมน์ <strong>"_status"</strong> - สถานะของแถวข้อมูล (corrected, pending, error)</li>
+                        <li>คอลัมน์ <strong>"_issues"</strong> - รายการปัญหาที่พบ</li>
+                        <li>คอลัมน์ <strong>"_corrections"</strong> - รายการการแก้ไขที่ทำ</li>
+                        <li>คอลัมน์ <strong>"_recommendations"</strong> - คำแนะนำการแก้ไข</li>
+                    </ul>
+                </div>
+                
+                <div class="actions-section">
+                    <button class="btn btn-success" id="confirmDownloadBtn">
+                        <i class="fas fa-file-download"></i> ดาวน์โหลดไฟล์
+                    </button>
+                    <button class="btn btn-warning" id="backToEditBtn">
+                        <i class="fas fa-arrow-left"></i> กลับไปแก้ไขข้อมูล
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -1222,6 +1461,7 @@
         let isEditMode = false; // โหมดแก้ไข
         let editedCells = new Map(); // เก็บเซลล์ที่แก้ไขแล้ว
         let dataTypeConfigurations = {}; // เก็บการกำหนดประเภทข้อมูล
+        let dataIssues = []; // เก็บรายการปัญหา
         
         // อ้างอิงองค์ประกอบ DOM
         const csvFileInput = document.getElementById('csvFileInput');
@@ -1268,9 +1508,18 @@
         const applySampleConfigBtn = document.getElementById('applySampleConfigBtn');
         const cancelConfigBtn = document.getElementById('cancelConfigBtn');
         const showDataTypeBtn = document.getElementById('showDataTypeBtn');
+        const showReportBtn = document.getElementById('showReportBtn');
         const validDataCount = document.getElementById('validDataCount');
         const checkDataCount = document.getElementById('checkDataCount');
         const errorDataCount = document.getElementById('errorDataCount');
+        const downloadReport = document.getElementById('downloadReport');
+        const reportStats = document.getElementById('reportStats');
+        const reportTableBody = document.getElementById('reportTableBody');
+        const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
+        const backToEditBtn = document.getElementById('backToEditBtn');
+        const downloadAll = document.getElementById('downloadAll');
+        const downloadCleaned = document.getElementById('downloadCleaned');
+        const downloadReportOnly = document.getElementById('downloadReportOnly');
         
         // ฟังก์ชันอ่านไฟล์ CSV
         function readCSVFile(file) {
@@ -1561,11 +1810,12 @@
                 columnIssues: {},
                 validColumns: 0,
                 checkColumns: 0,
-                errorColumns: 0
+                errorColumns: 0,
+                issuesList: [] // รายการปัญหา
             };
             
             // ตรวจสอบข้อมูลว่าง
-            analyzedData.data.forEach(row => {
+            analyzedData.data.forEach((row, rowIndex) => {
                 Object.keys(row).forEach(key => {
                     if (key !== '_rowNumber' && (!row[key] || row[key].trim() === '')) {
                         row[`${key}_issue`] = 'empty';
@@ -1575,6 +1825,17 @@
                         if (!issues.columnIssues[key].includes('empty')) {
                             issues.columnIssues[key].push('empty');
                         }
+                        
+                        // เพิ่มรายการปัญหา
+                        issues.issuesList.push({
+                            row: rowIndex + 1,
+                            column: key,
+                            value: row[key] || '(ว่าง)',
+                            issue: 'empty',
+                            description: 'เซลล์ว่างเปล่า',
+                            recommendation: 'กรุณากรอกข้อมูลในเซลล์นี้',
+                            status: 'pending'
+                        });
                     }
                 });
             });
@@ -1592,6 +1853,17 @@
                 if (seenRows.has(rowKey)) {
                     duplicateIndices.push(index);
                     issues.duplicates++;
+                    
+                    // เพิ่มรายการปัญหา
+                    issues.issuesList.push({
+                        row: index + 1,
+                        column: 'ข้อมูลซ้ำทั้งแถว',
+                        value: 'แถวซ้ำกัน',
+                        issue: 'duplicate',
+                        description: 'ข้อมูลแถวนี้ซ้ำกับแถวอื่น',
+                        recommendation: 'ตรวจสอบว่าข้อมูลควรซ้ำหรือไม่ ถ้าไม่ควรซ้ำให้ลบแถวนี้',
+                        status: 'pending'
+                    });
                 } else {
                     seenRows.add(rowKey);
                 }
@@ -1606,13 +1878,15 @@
             
             // ตรวจสอบรูปแบบข้อมูลตามประเภทที่กำหนด
             if (Object.keys(dataTypeConfigurations).length > 0) {
-                analyzedData.data.forEach((row, index) => {
+                analyzedData.data.forEach((row, rowIndex) => {
                     Object.keys(row).forEach(key => {
                         if (key !== '_rowNumber' && row[key]) {
                             const config = dataTypeConfigurations[key];
                             if (config) {
                                 const value = row[key].trim();
                                 let isValid = true;
+                                let issueDesc = '';
+                                let recommendation = '';
                                 
                                 // ตรวจสอบตามประเภทข้อมูล
                                 switch(config.type) {
@@ -1621,6 +1895,8 @@
                                             isValid = false;
                                             row[`${key}_type_issue`] = 'number';
                                             issues.type++;
+                                            issueDesc = 'ค่าที่ใส่ไม่ใช่ตัวเลข';
+                                            recommendation = `กรุณากรอกตัวเลขเท่านั้น (รูปแบบ: ${config.format})`;
                                             
                                             if (!issues.columnIssues[key]) issues.columnIssues[key] = [];
                                             if (!issues.columnIssues[key].includes('type')) {
@@ -1642,6 +1918,8 @@
                                             isValid = false;
                                             row[`${key}_format_issue`] = 'date';
                                             issues.format++;
+                                            issueDesc = 'รูปแบบวันที่ไม่ถูกต้อง';
+                                            recommendation = `กรุณากรอกวันที่ในรูปแบบ: ${config.format}`;
                                             
                                             if (!issues.columnIssues[key]) issues.columnIssues[key] = [];
                                             if (!issues.columnIssues[key].includes('format')) {
@@ -1649,6 +1927,29 @@
                                             }
                                         }
                                         break;
+                                        
+                                    case 'text':
+                                        if (config.format === '3 Characters' && value.length !== 3) {
+                                            isValid = false;
+                                            row[`${key}_format_issue`] = 'text';
+                                            issues.format++;
+                                            issueDesc = 'ความยาวข้อความไม่ถูกต้อง';
+                                            recommendation = `กรุณากรอกข้อความ ${config.format}`;
+                                        }
+                                        break;
+                                }
+                                
+                                if (!isValid) {
+                                    // เพิ่มรายการปัญหา
+                                    issues.issuesList.push({
+                                        row: rowIndex + 1,
+                                        column: key,
+                                        value: value,
+                                        issue: config.type === 'number' ? 'type' : 'format',
+                                        description: issueDesc,
+                                        recommendation: recommendation,
+                                        status: 'pending'
+                                    });
                                 }
                             }
                         }
@@ -1680,6 +1981,9 @@
                     issues.validColumns++;
                 }
             });
+            
+            // เก็บรายการปัญหา
+            dataIssues = issues.issuesList;
             
             return {
                 data: analyzedData,
@@ -1854,6 +2158,211 @@
             }
         }
         
+        // ฟังก์ชันแสดงรายงานการแก้ไข
+        function showDownloadReport() {
+            if (!processedData) {
+                alert('กรุณาประมวลผลข้อมูลก่อนดูรายงาน');
+                return;
+            }
+            
+            // ซ่อนข้อมูล preview และแสดงรายงาน
+            dataPreview.style.display = 'none';
+            downloadReport.classList.add('show');
+            
+            // สรุปสถิติ
+            const stats = processedData.issues;
+            const totalIssues = dataIssues.length;
+            const correctedIssues = dataIssues.filter(issue => issue.status === 'corrected').length;
+            const pendingIssues = dataIssues.filter(issue => issue.status === 'pending').length;
+            
+            reportStats.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${totalIssues}</div>
+                    <div class="stat-label">ปัญหาทั้งหมด</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${correctedIssues}</div>
+                    <div class="stat-label">แก้ไขแล้ว</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${pendingIssues}</div>
+                    <div class="stat-label">ต้องแก้ไข</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.correctPercent}%</div>
+                    <div class="stat-label">ข้อมูลถูกต้อง</div>
+                </div>
+            `;
+            
+            // สร้างรายละเอียด
+            reportTableBody.innerHTML = '';
+            
+            dataIssues.forEach((issue, index) => {
+                const row = document.createElement('tr');
+                if (issue.status === 'pending') {
+                    row.className = 'requires-action';
+                } else if (issue.status === 'corrected') {
+                    row.className = 'corrected';
+                }
+                
+                const statusBadge = issue.status === 'pending' ? 
+                    '<span class="status-badge status-pending">ต้องแก้ไข</span>' :
+                    '<span class="status-badge status-corrected">แก้ไขแล้ว</span>';
+                
+                row.innerHTML = `
+                    <td>${issue.row}</td>
+                    <td>${issue.column}</td>
+                    <td>${issue.value}</td>
+                    <td>${statusBadge}</td>
+                    <td>${issue.description}</td>
+                    <td>
+                        ${issue.recommendation}
+                        ${issue.status === 'pending' ? 
+                            `<div class="action-recommendation">
+                                <strong>คำแนะนำ:</strong> ${issue.recommendation}
+                            </div>` : ''
+                        }
+                    </td>
+                `;
+                
+                reportTableBody.appendChild(row);
+            });
+            
+            // ถ้าไม่มีปัญหา
+            if (dataIssues.length === 0) {
+                reportTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px;">
+                            <i class="fas fa-check-circle" style="font-size: 3rem; color: #4caf50; margin-bottom: 15px;"></i>
+                            <h3 style="color: #4caf50;">ไม่มีข้อมูลที่ต้องแก้ไข</h3>
+                            <p>ข้อมูลทั้งหมดถูกต้องและพร้อมดาวน์โหลด</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // ฟังก์ชันดาวน์โหลดไฟล์ CSV
+        function downloadCSV() {
+            if (!uploadedData) return;
+            
+            const downloadOption = document.querySelector('input[name="downloadOption"]:checked').value;
+            let csvContent = '';
+            let fileName = '';
+            
+            // ส่วนหัวไฟล์ที่มี BOM เพื่อรองรับ UTF-8
+            const BOM = '\uFEFF';
+            
+            if (downloadOption === 'report') {
+                // ดาวน์โหลดเฉพาะรายงาน
+                csvContent = BOM + 'รายงานการแก้ไขข้อมูล\n\n';
+                csvContent += 'แถว,คอลัมน์,ค่าปัจจุบัน,สถานะ,ปัญหาที่พบ,คำแนะนำการแก้ไข\n';
+                
+                dataIssues.forEach(issue => {
+                    csvContent += `${issue.row},"${issue.column}","${issue.value}","${issue.status === 'pending' ? 'ต้องแก้ไข' : 'แก้ไขแล้ว'}","${issue.description}","${issue.recommendation}"\n`;
+                });
+                
+                fileName = `report_${fileName.textContent || 'data'}.csv`;
+            } else {
+                // ดาวน์โหลดข้อมูล
+                const includeAllData = downloadOption === 'all';
+                
+                // สร้าง headers รวมคอลัมน์เพิ่มเติม
+                const baseHeaders = uploadedData.headers;
+                const extraHeaders = ['_status', '_issues', '_corrections', '_recommendations'];
+                const allHeaders = [...baseHeaders, ...extraHeaders];
+                
+                csvContent = BOM + allHeaders.join(',') + '\n';
+                
+                // สร้างข้อมูล
+                uploadedData.data.forEach((row, rowIndex) => {
+                    const rowData = [...baseHeaders.map(header => row[header] || '')];
+                    
+                    // หาปัญหาของแถวนี้
+                    const rowIssues = dataIssues.filter(issue => issue.row === rowIndex + 1);
+                    const correctedIssues = rowIssues.filter(issue => issue.status === 'corrected');
+                    const pendingIssues = rowIssues.filter(issue => issue.status === 'pending');
+                    
+                    // สถานะ
+                    let status = 'correct';
+                    if (pendingIssues.length > 0) status = 'pending';
+                    else if (correctedIssues.length > 0) status = 'corrected';
+                    
+                    // รายการปัญหา
+                    const issuesList = rowIssues.map(issue => issue.description).join('; ');
+                    
+                    // รายการแก้ไข
+                    const corrections = correctedIssues.map(issue => 
+                        `${issue.column}: "${issue.value}" -> แก้ไขแล้ว`
+                    ).join('; ');
+                    
+                    // คำแนะนำ
+                    const recommendations = pendingIssues.map(issue => 
+                        `${issue.column}: ${issue.recommendation}`
+                    ).join('; ');
+                    
+                    rowData.push(status, issuesList, corrections, recommendations);
+                    
+                    // ตรวจสอบว่าต้องรวมแถวนี้หรือไม่
+                    let shouldInclude = true;
+                    if (downloadOption === 'cleaned' && pendingIssues.length > 0) {
+                        shouldInclude = false;
+                    }
+                    
+                    if (shouldInclude || includeAllData) {
+                        // Escape ค่าที่มี comma หรือ quotes
+                        const escapedRowData = rowData.map(value => {
+                            if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+                                return '"' + value.replace(/"/g, '""') + '"';
+                            }
+                            return value;
+                        });
+                        
+                        csvContent += escapedRowData.join(',') + '\n';
+                    }
+                });
+                
+                fileName = `${downloadOption === 'cleaned' ? 'cleaned_' : ''}${fileName.textContent || 'data'}.csv`;
+            }
+            
+            // สร้าง Blob และดาวน์โหลด
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // แสดงข้อความสรุป
+            let message = `✅ ดาวน์โหลดไฟล์ "${fileName}" สำเร็จ!\n\n`;
+            
+            if (downloadOption === 'report') {
+                message += `รายงานประกอบด้วย ${dataIssues.length} รายการปัญหา\n`;
+            } else {
+                const totalRows = uploadedData.data.length;
+                const cleanedRows = uploadedData.data.filter((row, index) => {
+                    const rowIssues = dataIssues.filter(issue => issue.row === index + 1 && issue.status === 'pending');
+                    return rowIssues.length === 0;
+                }).length;
+                
+                message += `ข้อมูลประกอบด้วย:\n`;
+                message += `- ${totalRows} แถวข้อมูลทั้งหมด\n`;
+                
+                if (downloadOption === 'cleaned') {
+                    message += `- ${cleanedRows} แถวที่ถูกต้อง\n`;
+                    message += `- ${totalRows - cleanedRows} แถวที่มีปัญหาถูกตัดออก\n`;
+                } else {
+                    message += `- ${uploadedData.headers.length} คอลัมน์หลัก\n`;
+                    message += `- 4 คอลัมน์เพิ่มเติมสำหรับติดตามสถานะ\n`;
+                }
+            }
+            
+            alert(message);
+        }
+        
         // ฟังก์ชันเปิดโหมดแก้ไข
         function enableEditMode() {
             isEditMode = true;
@@ -1961,6 +2470,17 @@
                     newValue: newValue
                 });
                 
+                // อัพเดทสถานะปัญหา
+                const issueIndex = dataIssues.findIndex(issue => 
+                    issue.row === rowIndex + 1 && issue.column === colName
+                );
+                
+                if (issueIndex !== -1) {
+                    dataIssues[issueIndex].status = 'corrected';
+                    dataIssues[issueIndex].value = newValue;
+                    dataIssues[issueIndex].description = 'แก้ไขแล้ว';
+                }
+                
                 showEditMessage(`บันทึกการแก้ไขแถว ${rowIndex + 1}, คอลัมน์ "${colName}"`, false);
             }
             
@@ -1994,6 +2514,13 @@
                 
                 if (allDataRows[rowIndex]) {
                     allDataRows[rowIndex][colName] = originalValue;
+                }
+            });
+            
+            // รีเซ็ตสถานะปัญหา
+            dataIssues.forEach(issue => {
+                if (issue.status === 'corrected') {
+                    issue.status = 'pending';
                 }
             });
             
@@ -2138,6 +2665,7 @@
                 
                 // เปิดใช้งานปุ่มดาวน์โหลด
                 downloadBtn.disabled = false;
+                showReportBtn.disabled = false;
                 
                 // แสดงข้อมูลสรุป
                 showSummary(processedData.issues);
@@ -2173,12 +2701,15 @@
             isEditMode = false;
             editedCells.clear();
             dataTypeConfigurations = {};
+            dataIssues = [];
             
             dataPreview.style.display = 'none';
             dataTypeConfig.classList.remove('show');
             dashboardSection.classList.remove('show');
+            downloadReport.classList.remove('show');
             processBtn.disabled = true;
             downloadBtn.disabled = true;
+            showReportBtn.disabled = true;
             fileInfo.classList.remove('show');
             columnSelector.classList.remove('show');
             editControls.classList.remove('show');
@@ -2359,45 +2890,24 @@
             alert(message);
         });
         
+        // แสดงรายงาน
+        showReportBtn.addEventListener('click', showDownloadReport);
+        
+        // กลับไปแก้ไขข้อมูล
+        backToEditBtn.addEventListener('click', () => {
+            downloadReport.classList.remove('show');
+            dataPreview.style.display = 'block';
+        });
+        
+        // ดาวน์โหลดไฟล์
+        confirmDownloadBtn.addEventListener('click', downloadCSV);
+        
+        // ปุ่มดาวน์โหลดเดิม
+        downloadBtn.addEventListener('click', showDownloadReport);
+        
         processBtn.addEventListener('click', processData);
         
         resetBtn.addEventListener('click', resetAll);
-        
-        downloadBtn.addEventListener('click', () => {
-            if (uploadedData) {
-                // สร้างไฟล์ CSV จากข้อมูลทั้งหมด (รวมการแก้ไข)
-                let csvContent = '';
-                
-                // เขียน header
-                csvContent = uploadedData.headers.join(',') + '\n';
-                
-                // เขียนข้อมูลทั้งหมด
-                allDataRows.forEach(row => {
-                    const rowValues = uploadedData.headers.map(header => {
-                        // Escape commas in values
-                        let value = row[header] || '';
-                        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-                            value = '"' + value.replace(/"/g, '""') + '"';
-                        }
-                        return value;
-                    });
-                    csvContent += rowValues.join(',') + '\n';
-                });
-                
-                // สร้าง Blob และดาวน์โหลด
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'cleaned_' + (fileName.textContent || 'data.csv'));
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                alert(`✅ ดาวน์โหลดไฟล์ cleaned_${fileName.textContent || 'data.csv'} สำเร็จ!\n\nไฟล์ประกอบด้วย:\n- ${uploadedData.totalRows} แถวข้อมูล\n- ${uploadedData.headers.length} คอลัมน์\n- รวมการแก้ไขทั้งหมดที่บันทึกแล้ว\n- ผ่านการตรวจสอบตามประเภทข้อมูลที่กำหนด`);
-            }
-        });
         
         // Column selector controls
         toggleColumnSelector.addEventListener('click', () => {
