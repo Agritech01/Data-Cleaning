@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบ Clean Data - แสดงข้อมูลทั้งหมดและแก้ไขในเว็บได้</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f72585;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Prompt', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-family: 'Kanit', sans-serif;
+            font-size: 2.8rem;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .upload-section, .steps-section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            color: var(--secondary-color);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--accent-color);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            text-align: center;
+            background-color: rgba(76, 201, 240, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .upload-area i {
+            font-size: 4rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+        
+        .upload-area h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+        
+        .upload-area p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .file-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: left;
+            display: none;
+        }
+        
+        .file-info.show {
+            display: block;
+        }
+        
+        .file-info p {
+            margin-bottom: 5px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 30px;
+            border: none;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #3d8b40;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e68900;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d1144a;
+        }
+        
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .step-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid var(--primary-color);
+        }
+        
+        .step-card.active {
+            border-left-color: var(--success-color);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .step-card.completed {
+            border-left-color: #4caf50;
+            opacity: 0.9;
+        }
+        
+        .step-header {
+            background-color: #f8f9fa;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+        }
+        
+        .step-number {
+            background-color: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-card.completed .step-number {
+            background-color: #4caf50;
+        }
+        
+        .step-card.active .step-number {
+            background-color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+        
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 500;
+            flex-grow: 1;
+        }
+        
+        .step-status {
+            font-size: 0.9rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background-color: #e9ecef;
+            color: #666;
+        }
+        
+        .step-card.completed .step-status {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .step-card.active .step-status {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .step-content {
+            padding: 0 25px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .step-card.active .step-content {
+            padding: 25px;
+            max-height: 1000px;
+        }
+        
+        .step-subitems {
+            list-style-type: none;
+            margin-top: 15px;
+        }
+        
+        .step-subitems li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        .step-subitems li:last-child {
+            border-bottom: none;
+        }
+        
+        .step-subitems li:before {
+            content: "✓";
+            color: var(--success-color);
+            font-size: 1rem;
+            position: absolute;
+            left: 0;
+            top: 8px;
+        }
+        
+        .step-card.completed li:before {
+            content: "✓";
+            color: #4caf50;
+        }
+        
+        .ai-feature {
+            background-color: rgba(76, 201, 240, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .ai-feature h4 {
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .data-preview {
+            margin-top: 40px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            display: none;
+        }
+        
+        .preview-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .data-table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 2000px;
+        }
+        
+        .data-table th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            min-width: 120px;
+        }
+        
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+            vertical-align: top;
+            min-width: 120px;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .data-table tr.error-row {
+            background-color: #ffe6e6;
+        }
+        
+        .data-table tr.duplicate-row {
+            background-color: #fff0f0;
+        }
+        
+        .data-table tr.empty-row {
+            background-color: #f0f8ff;
+        }
+        
+        .editable-cell {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .editable-cell:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .editable-cell.editing {
+            background-color: #fffde7;
+            padding: 0;
+        }
+        
+        .cell-input {
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--accent-color);
+            padding: 8px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .empty-cell {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        
+        .duplicate-cell {
+            color: #f72585;
+            font-weight: bold;
+        }
+        
+        .actions-section {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .dashboard-section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            margin-top: 40px;
+            display: none;
+        }
+        
+        .dashboard-section.show {
+            display: block;
+        }
+        
+        .charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .chart {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background-color: #f8f9fa;
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+        
+        .chart-bar {
+            height: 30px;
+            background-color: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .chart-fill {
+            height: 100%;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            color: white;
+            font-weight: 500;
+            min-width: 50px;
+            transition: width 1s ease;
+        }
+        
+        .chart-legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .limitations {
+            background-color: #fff3cd;
+            border-left: 6px solid #ffc107;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 40px;
+        }
+        
+        .limitations h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #666;
+            margin-top: 50px;
+            border-top: 1px solid #ddd;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .step-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .step-status {
+                align-self: flex-start;
+            }
+            
+            .preview-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .charts-container {
+                flex-direction: column;
+            }
+            
+            .chart {
+                min-width: 100%;
+            }
+            
+            .data-table {
+                min-width: 3000px;
+            }
+        }
+        
+        /* Column selector */
+        .column-selector {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .column-selector.show {
+            display: block;
+        }
+        
+        .column-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+        }
+        
+        .column-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .column-checkbox {
+            margin-right: 5px;
+        }
+        
+        .edit-controls {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .edit-controls.show {
+            display: block;
+        }
+        
+        .edit-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .edit-message.show {
+            display: block;
+        }
+        
+        .edit-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .scroll-info {
+            background-color: #e3f2fd;
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .scroll-info.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-database"></i> ระบบ Clean Data</h1>
+            <p class="subtitle">ระบบสำหรับทำความสะอาดข้อมูลจากไฟล์ CSV อัตโนมัติด้วย AI - แสดงข้อมูลทั้งหมดและแก้ไขในเว็บได้</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="upload-section">
+                <h2 class="section-title"><i class="fas fa-file-upload"></i> อัปโหลดไฟล์ CSV</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-file-csv"></i>
+                    <h3>ลากไฟล์ CSV ของคุณมาวางที่นี่</h3>
+                    <p>หรือคลิกเพื่อเลือกไฟล์จากคอมพิวเตอร์</p>
+                    <p><strong>รองรับไฟล์ขนาดใหญ่ถึง 100MB</strong></p>
+                    <input type="file" id="csvFileInput" class="file-input" accept=".csv">
+                    <button class="btn btn-primary" id="browseBtn">
+                        <i class="fas fa-folder-open"></i> เลือกไฟล์ CSV
+                    </button>
+                </div>
+                
+                <div class="file-info" id="fileInfo">
+                    <p><strong>ชื่อไฟล์:</strong> <span id="fileName">-</span></p>
+                    <p><strong>ขนาดไฟล์:</strong> <span id="fileSize">-</span></p>
+                    <p><strong>จำนวนแถว:</strong> <span id="fileRows">-</span></p>
+                    <p><strong>จำนวนคอลัมน์:</strong> <span id="fileCols">-</span></p>
+                </div>
+                
+                <div id="loadingSpinner" class="spinner" style="display: none;"></div>
+                
+                <div class="actions-section">
+                    <button class="btn btn-success" id="processBtn" disabled>
+                        <i class="fas fa-cogs"></i> เริ่มประมวลผลด้วย AI
+                    </button>
+                    <button class="btn btn-primary" id="resetBtn">
+                        <i class="fas fa-redo"></i> ล้างข้อมูล
+                    </button>
+                </div>
+            </div>
+            
+            <div class="steps-section">
+                <h2 class="section-title"><i class="fas fa-list-ol"></i> ขั้นตอนการทำ Clean Data</h2>
+                
+                <div class="steps-container" id="stepsContainer">
+                    <!-- ขั้นตอนจะถูกสร้างด้วย JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-preview" id="dataPreview">
+            <div class="preview-title">
+                <h2 class="section-title"><i class="fas fa-table"></i> ข้อมูลจากไฟล์ CSV</h2>
+                <div>
+                    <span id="rowCount">0 แถว</span> | 
+                    <span id="colCount">0 คอลัมน์</span>
+                </div>
+            </div>
+            
+            <div class="scroll-info" id="scrollInfo">
+                <i class="fas fa-info-circle"></i> ตารางนี้มีคอลัมน์จำนวนมาก กรุณาเลื่อนหน้าจอไปทางขวาเพื่อดูคอลัมน์ทั้งหมด
+            </div>
+            
+            <div class="column-selector" id="columnSelector">
+                <h4><i class="fas fa-columns"></i> เลือกคอลัมน์ที่ต้องการแสดง</h4>
+                <div class="column-list" id="columnList">
+                    <!-- คอลัมน์จะถูกสร้างด้วย JavaScript -->
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="btn btn-sm btn-primary" id="selectAllColumns">
+                        <i class="fas fa-check-square"></i> เลือกทั้งหมด
+                    </button>
+                    <button class="btn btn-sm btn-warning" id="deselectAllColumns">
+                        <i class="fas fa-times-circle"></i> ยกเลิกทั้งหมด
+                    </button>
+                    <button class="btn btn-sm btn-success" id="applyColumnSelection">
+                        <i class="fas fa-check"></i> นำไปใช้
+                    </button>
+                </div>
+            </div>
+            
+            <div class="edit-controls" id="editControls">
+                <h4><i class="fas fa-edit"></i> โหมดแก้ไขข้อมูล</h4>
+                <p>ดับเบิลคลิกที่เซลล์ใดๆ เพื่อแก้ไขข้อมูล แล้วกด Enter เพื่อบันทึก หรือ Esc เพื่อยกเลิก</p>
+                <div>
+                    <button class="btn btn-sm btn-success" id="saveAllBtn">
+                        <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลงทั้งหมด
+                    </button>
+                    <button class="btn btn-sm btn-danger" id="cancelEditBtn">
+                        <i class="fas fa-times"></i> ยกเลิกการแก้ไขทั้งหมด
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="toggleEditMode">
+                        <i class="fas fa-edit"></i> เปิด/ปิดโหมดแก้ไข
+                    </button>
+                </div>
+                <div class="edit-message" id="editMessage"></div>
+            </div>
+            
+            <div class="data-table-container">
+                <table class="data-table" id="dataTable">
+                    <!-- ตารางข้อมูลจะถูกสร้างด้วย JavaScript -->
+                </table>
+            </div>
+            
+            <div class="actions-section">
+                <button class="btn btn-success" id="downloadBtn" disabled>
+                    <i class="fas fa-download"></i> ดาวน์โหลดไฟล์ที่ Clean แล้ว
+                </button>
+                <button class="btn btn-warning" id="toggleColumnSelector">
+                    <i class="fas fa-columns"></i> เลือกคอลัมน์ที่แสดง
+                </button>
+            </div>
+        </div>
+        
+        <div class="dashboard-section" id="dashboardSection">
+            <h2 class="section-title"><i class="fas fa-chart-pie"></i> Dashboard สรุปผลการตรวจสอบ</h2>
+            
+            <div class="charts-container">
+                <div class="chart">
+                    <h3 class="chart-title">Error Categorization</h3>
+                    <div class="chart-bar">
+                        <div class="chart-fill" id="duplicateBar" style="width: 0%; background-color: #f72585;">0%</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-fill" id="emptyBar" style="width: 0%; background-color: #4361ee;">0%</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-fill" id="formatBar" style="width: 0%; background-color: #4cc9f0;">0%</div>
+                    </div>
+                    
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #f72585;"></div>
+                            <span>ข้อมูลซ้ำ</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #4361ee;"></div>
+                            <span>ข้อมูลว่าง</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #4cc9f0;"></div>
+                            <span>รูปแบบผิด</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart">
+                    <h3 class="chart-title">สถานะข้อมูล</h3>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(#4caf50 0%, #ff9800 0%); margin: 0 auto; position: relative; display: flex; align-items: center; justify-content: center;" id="statusCircle">
+                            <div style="width: 150px; height: 150px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                <span style="font-size: 2rem; font-weight: bold; color: var(--dark-color);" id="correctPercent">0%</span>
+                                <span style="color: #666;">ถูกต้อง</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <p><span style="color: #4caf50; font-weight: bold;" id="correctCount">0% ข้อมูลถูกต้อง</span> พร้อมดาวน์โหลด</p>
+                            <p><span style="color: #ff9800; font-weight: bold;" id="errorCount">0% ต้องแก้ไข</span> ก่อนดาวน์โหลด</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="limitations">
+            <h3><i class="fas fa-exclamation-triangle"></i> ข้อจำกัดของระบบ</h3>
+            <ul class="step-subitems">
+                <li>ระบบนี้เป็น Front-end เท่านั้น ยังไม่มีการทำงานของ Back-end จริง</li>
+                <li>รองรับไฟล์ CSV ขนาดใหญ่ได้ถึง 100MB</li>
+                <li>ฟังก์ชัน AI ที่แสดงเป็นเพียงการจำลอง ไม่ได้ทำงานจริงกับข้อมูล</li>
+                <li>การประมวลผลทั้งหมดทำบนเบราว์เซอร์ ไฟล์ใหญ่ๆ อาจใช้เวลาประมวลผลนาน</li>
+                <li>จำเป็นต้องพัฒนา Back-end และระบบ AI จริงเพื่อให้ระบบทำงานได้สมบูรณ์</li>
+                <li>ควรเพิ่มระบบ Authentication สำหรับการจัดการผู้ใช้หลายคน</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>© 2023 ระบบ Clean Data - แสดงข้อมูลทั้งหมดและแก้ไขในเว็บได้</p>
+        </footer>
+    </div>
+
+    <script>
+        // ข้อมูลขั้นตอนตามตาราง
+        const stepsData = [
+            {
+                number: 1,
+                title: "กำหนดเงื่อนไขที่ต้องการใช้",
+                items: ["จำนวนคอลัมน์", "ประเภทข้อมูล", "หน่วยวัด"],
+                aiFeature: false
+            },
+            {
+                number: 2,
+                title: "รับไฟล์เข้าระบบ clean data",
+                items: ["ประเภทของไฟล์ CSV"],
+                aiFeature: false
+            },
+            {
+                number: 3,
+                title: "AI ช่วยตรวจสอบข้อมูลตามเงื่อนไข",
+                items: [
+                    "ตรวจข้อมูลซ้ำ",
+                    "ถ้าเจอข้อมูลที่เป็นช่องว่าง",
+                    "ถ้าข้อมูลผิด ให้ขึ้นแจ้งเตือนตรงในจุดนั้น",
+                    "กรณีที่ AI แจ้งเตือนจุดผิด ควรมีหน้าจอให้ผู้ใช้สามารถพิมพ์แก้ไขข้อมูลได้โดยตรงบนหน้าเว็บ ก่อนดาวน์โหลด"
+                ],
+                aiFeature: true
+            },
+            {
+                number: 4,
+                title: "AI ช่วยแก้ไขข้อผิดพลาดได้",
+                items: [
+                    "ช่วยปรับค่าที่เขียนต่างกันแต่ความหมายเดียวกัน",
+                    "ควรมีรูปแบบใหม่ 'Accept/Reject' การแก้ไขนั้นๆ ไม่ควรแก้แล้วเปลี่ยนเลยโดยที่ผู้ใช้ไม่ได้ตรวจสอบ"
+                ],
+                aiFeature: true
+            },
+            {
+                number: 5,
+                title: "AI สรุปข้อมูลผิด",
+                items: ["แสดงผลเป็น dashboard"],
+                aiFeature: true
+            },
+            {
+                number: 6,
+                title: "Error Categorization",
+                items: [
+                    "การแสดงผลประเภทของปัญหาที่พบ (เช่น ข้อมูลซ้ำ 30%, ข้อมูลว่าง 20%, รูปแบบผิด 50%)",
+                    "เมื่อข้อมูลถูกต้อง ให้สามารถดาวน์โหลดไฟล์ออกมาใช้ต่อไปได้"
+                ],
+                aiFeature: true
+            }
+        ];
+
+        // สร้างขั้นตอนในหน้าเว็บ
+        const stepsContainer = document.getElementById('stepsContainer');
+        let currentStep = 1;
+        
+        stepsData.forEach(step => {
+            const stepCard = document.createElement('div');
+            stepCard.className = 'step-card';
+            stepCard.id = `step-${step.number}`;
+            
+            stepCard.innerHTML = `
+                <div class="step-header" data-step="${step.number}">
+                    <div class="step-number">${step.number}</div>
+                    <h3 class="step-title">${step.title}</h3>
+                    <div class="step-status">รอการดำเนินการ</div>
+                </div>
+                <div class="step-content">
+                    <ul class="step-subitems">
+                        ${step.items.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                    ${step.aiFeature ? `
+                    <div class="ai-feature">
+                        <h4><i class="fas fa-robot"></i> คุณสมบัติ AI</h4>
+                        <p>ขั้นตอนนี้ใช้ AI ช่วยในการประมวลผลข้อมูลเพื่อเพิ่มความแม่นยำและประสิทธิภาพ</p>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            stepsContainer.appendChild(stepCard);
+        });
+
+        // ตัวแปรเก็บข้อมูล
+        let uploadedData = null;
+        let processedData = null;
+        let allDataRows = []; // เก็บข้อมูลทั้งหมด
+        let displayedColumns = []; // คอลัมน์ที่กำลังแสดง
+        let isEditMode = false; // โหมดแก้ไข
+        let editedCells = new Map(); // เก็บเซลล์ที่แก้ไขแล้ว
+        
+        // อ้างอิงองค์ประกอบ DOM
+        const csvFileInput = document.getElementById('csvFileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileRows = document.getElementById('fileRows');
+        const fileCols = document.getElementById('fileCols');
+        const browseBtn = document.getElementById('browseBtn');
+        const processBtn = document.getElementById('processBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const dataPreview = document.getElementById('dataPreview');
+        const dataTable = document.getElementById('dataTable');
+        const rowCount = document.getElementById('rowCount');
+        const colCount = document.getElementById('colCount');
+        const dashboardSection = document.getElementById('dashboardSection');
+        const duplicateBar = document.getElementById('duplicateBar');
+        const emptyBar = document.getElementById('emptyBar');
+        const formatBar = document.getElementById('formatBar');
+        const statusCircle = document.getElementById('statusCircle');
+        const correctPercent = document.getElementById('correctPercent');
+        const correctCount = document.getElementById('correctCount');
+        const errorCount = document.getElementById('errorCount');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const columnSelector = document.getElementById('columnSelector');
+        const columnList = document.getElementById('columnList');
+        const selectAllColumns = document.getElementById('selectAllColumns');
+        const deselectAllColumns = document.getElementById('deselectAllColumns');
+        const applyColumnSelection = document.getElementById('applyColumnSelection');
+        const toggleColumnSelector = document.getElementById('toggleColumnSelector');
+        const editControls = document.getElementById('editControls');
+        const saveAllBtn = document.getElementById('saveAllBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const toggleEditMode = document.getElementById('toggleEditMode');
+        const editMessage = document.getElementById('editMessage');
+        const scrollInfo = document.getElementById('scrollInfo');
+        
+        // ฟังก์ชันอ่านไฟล์ CSV
+        function readCSVFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    resolve(e.target.result);
+                };
+                reader.onerror = function(e) {
+                    reject(new Error('ไม่สามารถอ่านไฟล์ได้'));
+                };
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+        
+        // ฟังก์ชันแยกข้อมูล CSV สำหรับไฟล์ขนาดใหญ่
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+            if (lines.length === 0) {
+                throw new Error('ไฟล์ CSV ว่างเปล่า');
+            }
+            
+            // แยก header
+            const headers = parseCSVLine(lines[0]);
+            const data = [];
+            
+            // เก็บข้อมูลทั้งหมด
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                const row = {};
+                
+                headers.forEach((header, index) => {
+                    row[header] = values[index] || '';
+                });
+                
+                // เพิ่มหมายเลขแถวจริง
+                row._rowNumber = i;
+                data.push(row);
+            }
+            
+            return {
+                headers,
+                data,
+                rawText: csvText,
+                totalRows: data.length
+            };
+        }
+        
+        // ฟังก์ชันแยกแต่ละบรรทัดของ CSV (รองรับ comma ใน quoted strings)
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    // ถ้าเจอ quote ที่ไม่ถูก escape
+                    if (i === 0 || line[i-1] !== '\\') {
+                        inQuotes = !inQuotes;
+                    } else {
+                        current += char;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+        
+        // ฟังก์ชันตรวจสอบข้อมูลด้วย AI (จำลอง)
+        function analyzeDataWithAI(data) {
+            // จำลองการตรวจสอบด้วย AI
+            const analyzedData = JSON.parse(JSON.stringify(data));
+            const issues = {
+                empty: 0,
+                duplicates: 0,
+                format: 0,
+                totalRows: analyzedData.totalRows,
+                totalCells: analyzedData.totalRows * analyzedData.headers.length
+            };
+            
+            // ตรวจสอบข้อมูลว่าง
+            analyzedData.data.forEach(row => {
+                Object.keys(row).forEach(key => {
+                    if (key !== '_rowNumber' && (!row[key] || row[key].trim() === '')) {
+                        row[`${key}_issue`] = 'empty';
+                        issues.empty++;
+                    }
+                });
+            });
+            
+            // ตรวจสอบข้อมูลซ้ำ (จำลองสำหรับข้อมูลตัวอย่าง)
+            const seenRows = new Set();
+            const duplicateIndices = [];
+            
+            // ใช้แถวแรก 100 แถวเพื่อประหยัดทรัพยากร
+            const sampleRows = analyzedData.data.slice(0, 100);
+            
+            sampleRows.forEach((row, index) => {
+                // สร้าง key สำหรับตรวจสอบข้อมูลซ้ำ
+                const rowKey = JSON.stringify(row);
+                if (seenRows.has(rowKey)) {
+                    duplicateIndices.push(index);
+                    issues.duplicates++;
+                } else {
+                    seenRows.add(rowKey);
+                }
+            });
+            
+            // ทำเครื่องหมายแถวที่ซ้ำ
+            duplicateIndices.forEach(index => {
+                if (analyzedData.data[index]) {
+                    analyzedData.data[index]._isDuplicate = true;
+                }
+            });
+            
+            // ตรวจสอบรูปแบบข้อมูล (จำลอง)
+            analyzedData.data.forEach((row, index) => {
+                // ตรวจสอบรูปแบบวันที่ (คอลัมน์ที่มีคำว่า "วันที่")
+                Object.keys(row).forEach(key => {
+                    if (key.includes('วันที่') && row[key]) {
+                        // รูปแบบวันที่ที่ยอมรับ: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY
+                        const datePatterns = [
+                            /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+                            /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
+                            /^\d{2}-\d{2}-\d{4}$/ // DD-MM-YYYY
+                        ];
+                        
+                        const isValidDate = datePatterns.some(pattern => pattern.test(row[key]));
+                        if (!isValidDate && row[key].trim() !== '') {
+                            row._formatIssue = 'date';
+                            issues.format++;
+                        }
+                    }
+                });
+            });
+            
+            // คำนวณเปอร์เซ็นต์ (ประมาณการจากตัวอย่าง)
+            const sampleCells = sampleRows.length * analyzedData.headers.length;
+            issues.emptyPercent = sampleCells > 0 ? Math.round((issues.empty / sampleCells) * 100) : 0;
+            issues.duplicatePercent = sampleRows.length > 0 ? Math.round((issues.duplicates / sampleRows.length) * 100) : 0;
+            issues.formatPercent = sampleRows.length > 0 ? Math.round((issues.format / sampleRows.length) * 100) : 0;
+            
+            // คำนวณข้อมูลที่ถูกต้อง
+            const totalIssues = issues.empty + issues.duplicates + issues.format;
+            const totalSampleDataPoints = sampleRows.length * 3; // 3 ประเภทการตรวจสอบ
+            issues.correctPercent = 100 - Math.min(100, Math.round((totalIssues / totalSampleDataPoints) * 100));
+            
+            return {
+                data: analyzedData,
+                issues
+            };
+        }
+        
+        // ฟังก์ชันสร้าง column selector
+        function createColumnSelector(headers) {
+            columnList.innerHTML = '';
+            
+            headers.forEach((header, index) => {
+                const columnItem = document.createElement('div');
+                columnItem.className = 'column-item';
+                
+                const checkboxId = `col-${index}`;
+                columnItem.innerHTML = `
+                    <input type="checkbox" class="column-checkbox" id="${checkboxId}" checked>
+                    <label for="${checkboxId}">${header}</label>
+                `;
+                
+                columnList.appendChild(columnItem);
+            });
+            
+            // คอลัมน์ที่แสดงทั้งหมดเริ่มต้น
+            displayedColumns = [...headers];
+        }
+        
+        // ฟังก์ชันแสดงข้อมูลในตาราง (แสดงคอลัมน์ที่เลือก)
+        function displayDataTable(data, issues, columnsToShow = null) {
+            dataTable.innerHTML = '';
+            
+            // ใช้คอลัมน์ที่เลือกหรือคอลัมน์ทั้งหมด
+            const columns = columnsToShow || data.headers;
+            
+            // เก็บข้อมูลทั้งหมด
+            allDataRows = data.data;
+            
+            // สร้าง header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            columns.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                th.title = header;
+                headerRow.appendChild(th);
+            });
+            
+            // เพิ่มคอลัมน์สถานะถ้ามี issues
+            if (issues) {
+                const statusTh = document.createElement('th');
+                statusTh.textContent = 'สถานะ';
+                headerRow.appendChild(statusTh);
+            }
+            
+            thead.appendChild(headerRow);
+            dataTable.appendChild(thead);
+            
+            // สร้าง body (แสดงแค่ 1000 แถวแรกเพื่อประสิทธิภาพ)
+            const tbody = document.createElement('tbody');
+            const displayRows = data.data.slice(0, 1000);
+            
+            displayRows.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                
+                // ตรวจสอบว่าเป็นแถวที่มีปัญหา
+                let hasIssue = false;
+                let issueType = '';
+                let issueDetails = [];
+                
+                columns.forEach(header => {
+                    const td = document.createElement('td');
+                    td.className = 'editable-cell';
+                    td.dataset.row = rowIndex;
+                    td.dataset.col = header;
+                    td.dataset.originalValue = row[header] || '';
+                    
+                    const value = row[header] || '';
+                    td.textContent = value;
+                    td.title = value;
+                    
+                    // ตรวจสอบว่ามีปัญหาเรื่องค่าว่าง
+                    if (issues && row[`${header}_issue`] === 'empty') {
+                        td.classList.add('empty-cell');
+                        hasIssue = true;
+                        if (!issueDetails.includes('ค่าว่าง')) {
+                            issueDetails.push('ค่าว่าง');
+                        }
+                    }
+                    
+                    tr.appendChild(td);
+                });
+                
+                // ตรวจสอบว่ามีปัญหาเรื่องข้อมูลซ้ำ
+                if (issues && row._isDuplicate) {
+                    tr.classList.add('duplicate-row');
+                    hasIssue = true;
+                    issueType = 'duplicate';
+                    if (!issueDetails.includes('ข้อมูลซ้ำ')) {
+                        issueDetails.push('ข้อมูลซ้ำ');
+                    }
+                }
+                
+                // ตรวจสอบปัญหารูปแบบข้อมูล
+                if (issues && row._formatIssue) {
+                    hasIssue = true;
+                    issueType = 'format';
+                    if (row._formatIssue === 'date' && !issueDetails.includes('วันที่ผิดรูปแบบ')) {
+                        issueDetails.push('วันที่ผิดรูปแบบ');
+                    }
+                }
+                
+                // เพิ่มคอลัมน์สถานะถ้ามี issues
+                if (issues) {
+                    const statusTd = document.createElement('td');
+                    if (hasIssue) {
+                        let statusText = '';
+                        if (issueDetails.length > 0) {
+                            statusText = `<span style="color: #ff9800;"><i class="fas fa-exclamation-circle"></i> ${issueDetails.join(', ')}</span>`;
+                        }
+                        statusTd.innerHTML = statusText;
+                        tr.classList.add('error-row');
+                    } else {
+                        statusTd.innerHTML = '<span style="color: #4caf50;"><i class="fas fa-check-circle"></i> ถูกต้อง</span>';
+                    }
+                    statusTd.title = issueDetails.join(', ');
+                    tr.appendChild(statusTd);
+                }
+                
+                tbody.appendChild(tr);
+            });
+            
+            dataTable.appendChild(tbody);
+            
+            // อัพเดทจำนวนแถวและคอลัมน์
+            rowCount.textContent = `${data.totalRows} แถว (แสดง ${displayRows.length} แถวแรก)`;
+            colCount.textContent = `${data.headers.length} คอลัมน์ (แสดง ${columns.length} คอลัมน์)`;
+            
+            // แสดงข้อความเลื่อนถ้ามีคอลัมน์มาก
+            if (columns.length > 10) {
+                scrollInfo.classList.add('show');
+            } else {
+                scrollInfo.classList.remove('show');
+            }
+        }
+        
+        // ฟังก์ชันเปิดโหมดแก้ไข
+        function enableEditMode() {
+            isEditMode = true;
+            editControls.classList.add('show');
+            toggleEditMode.innerHTML = '<i class="fas fa-times"></i> ปิดโหมดแก้ไข';
+            
+            // เพิ่ม event listener สำหรับการดับเบิลคลิก
+            document.querySelectorAll('.editable-cell').forEach(cell => {
+                cell.addEventListener('dblclick', handleCellDoubleClick);
+            });
+            
+            showEditMessage('โหมดแก้ไขเปิดใช้งานแล้ว ดับเบิลคลิกที่เซลล์ใดๆ เพื่อแก้ไขข้อมูล', false);
+        }
+        
+        // ฟังก์ชันปิดโหมดแก้ไข
+        function disableEditMode() {
+            isEditMode = false;
+            toggleEditMode.innerHTML = '<i class="fas fa-edit"></i> เปิดโหมดแก้ไข';
+            
+            // ลบ event listener
+            document.querySelectorAll('.editable-cell').forEach(cell => {
+                cell.removeEventListener('dblclick', handleCellDoubleClick);
+            });
+            
+            // รีเซ็ตการแก้ไขทั้งหมด
+            cancelAllEdits();
+            
+            showEditMessage('โหมดแก้ไขปิดใช้งานแล้ว', false);
+        }
+        
+        // ฟังก์ชันจัดการการดับเบิลคลิกเซลล์
+        function handleCellDoubleClick(e) {
+            if (!isEditMode) return;
+            
+            const cell = e.target;
+            if (!cell.classList.contains('editable-cell')) return;
+            
+            // เริ่มการแก้ไขเซลล์
+            startCellEdit(cell);
+        }
+        
+        // ฟังก์ชันเริ่มแก้ไขเซลล์
+        function startCellEdit(cell) {
+            // เก็บค่าเดิม
+            const originalValue = cell.dataset.originalValue;
+            
+            // สร้าง input field
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'cell-input';
+            input.value = originalValue;
+            
+            // ล้างเนื้อหาเซลล์และเพิ่ม input
+            cell.textContent = '';
+            cell.appendChild(input);
+            cell.classList.add('editing');
+            
+            // โฟกัสที่ input
+            input.focus();
+            input.select();
+            
+            // เก็บ reference ไปยัง input
+            cell._currentInput = input;
+            
+            // Event listeners สำหรับ input
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    finishCellEdit(cell, input.value);
+                } else if (e.key === 'Escape') {
+                    cancelCellEdit(cell, originalValue);
+                }
+            });
+            
+            input.addEventListener('blur', function() {
+                // ใช้ setTimeout เพื่อให้คลิก其他地方ได้ก่อน
+                setTimeout(() => {
+                    if (cell.classList.contains('editing')) {
+                        finishCellEdit(cell, input.value);
+                    }
+                }, 100);
+            });
+        }
+        
+        // ฟังก์ชันบันทึกการแก้ไขเซลล์
+        function finishCellEdit(cell, newValue) {
+            const rowIndex = parseInt(cell.dataset.row);
+            const colName = cell.dataset.col;
+            const originalValue = cell.dataset.originalValue;
+            
+            // อัพเดทค่าในเซลล์
+            cell.textContent = newValue;
+            cell.classList.remove('editing');
+            cell.title = newValue;
+            
+            // อัพเดทค่าในข้อมูล
+            if (allDataRows[rowIndex]) {
+                allDataRows[rowIndex][colName] = newValue;
+                
+                // เก็บการแก้ไข
+                const editKey = `${rowIndex}_${colName}`;
+                editedCells.set(editKey, {
+                    row: rowIndex,
+                    col: colName,
+                    oldValue: originalValue,
+                    newValue: newValue
+                });
+                
+                showEditMessage(`บันทึกการแก้ไขแถว ${rowIndex + 1}, คอลัมน์ "${colName}"`, false);
+            }
+            
+            // ลบ input
+            delete cell._currentInput;
+        }
+        
+        // ฟังก์ชันยกเลิกการแก้ไขเซลล์
+        function cancelCellEdit(cell, originalValue) {
+            cell.textContent = originalValue;
+            cell.classList.remove('editing');
+            cell.title = originalValue;
+            
+            delete cell._currentInput;
+        }
+        
+        // ฟังก์ชันยกเลิกการแก้ไขทั้งหมด
+        function cancelAllEdits() {
+            editedCells.clear();
+            
+            // รีเซ็ตค่าทั้งหมดในตาราง
+            document.querySelectorAll('.editable-cell').forEach(cell => {
+                const originalValue = cell.dataset.originalValue;
+                cell.textContent = originalValue;
+                cell.title = originalValue;
+                cell.classList.remove('editing');
+                
+                // รีเซ็ตในข้อมูล
+                const rowIndex = parseInt(cell.dataset.row);
+                const colName = cell.dataset.col;
+                
+                if (allDataRows[rowIndex]) {
+                    allDataRows[rowIndex][colName] = originalValue;
+                }
+            });
+            
+            showEditMessage('ยกเลิกการแก้ไขทั้งหมดแล้ว', false);
+        }
+        
+        // ฟังก์ชันบันทึกการแก้ไขทั้งหมด
+        function saveAllEdits() {
+            if (editedCells.size === 0) {
+                showEditMessage('ไม่มีการแก้ไขใดๆ ที่ต้องบันทึก', false);
+                return;
+            }
+            
+            // อัพเดทค่า original value
+            editedCells.forEach((edit, key) => {
+                const cell = document.querySelector(`[data-row="${edit.row}"][data-col="${edit.col}"]`);
+                if (cell) {
+                    cell.dataset.originalValue = edit.newValue;
+                }
+            });
+            
+            showEditMessage(`บันทึกการแก้ไข ${editedCells.size} เซลล์เรียบร้อยแล้ว`, false);
+            
+            // รีเซ็ต editedCells
+            editedCells.clear();
+        }
+        
+        // ฟังก์ชันแสดงข้อความแก้ไข
+        function showEditMessage(message, isError = false) {
+            editMessage.textContent = message;
+            editMessage.classList.remove('error');
+            editMessage.classList.add('show');
+            
+            if (isError) {
+                editMessage.classList.add('error');
+            }
+            
+            // ซ่อนข้อความหลังจาก 3 วินาที
+            setTimeout(() => {
+                editMessage.classList.remove('show');
+            }, 3000);
+        }
+        
+        // ฟังก์ชันอัพเดท Dashboard
+        function updateDashboard(issues) {
+            // อัพเดทกราฟแท่ง
+            setTimeout(() => {
+                duplicateBar.style.width = `${issues.duplicatePercent}%`;
+                duplicateBar.textContent = `${issues.duplicatePercent}%`;
+                
+                emptyBar.style.width = `${issues.emptyPercent}%`;
+                emptyBar.textContent = `${issues.emptyPercent}%`;
+                
+                formatBar.style.width = `${issues.formatPercent}%`;
+                formatBar.textContent = `${issues.formatPercent}%`;
+                
+                // อัพเดทวงกลมสถานะ
+                const correct = issues.correctPercent;
+                const error = 100 - correct;
+                statusCircle.style.background = `conic-gradient(#4caf50 ${correct}%, #ff9800 0%)`;
+                correctPercent.textContent = `${correct}%`;
+                correctCount.textContent = `${correct}% ข้อมูลถูกต้อง`;
+                errorCount.textContent = `${error}% ต้องแก้ไข`;
+            }, 100);
+            
+            // แสดง dashboard
+            dashboardSection.classList.add('show');
+        }
+        
+        // ฟังก์ชันอัพเดทขั้นตอน
+        function updateStepStatus(stepNumber, status) {
+            const stepCard = document.getElementById(`step-${stepNumber}`);
+            const stepStatus = stepCard.querySelector('.step-status');
+            
+            stepCard.classList.remove('active', 'completed');
+            stepStatus.textContent = 'รอการดำเนินการ';
+            
+            if (status === 'active') {
+                stepCard.classList.add('active');
+                stepStatus.textContent = 'กำลังดำเนินการ';
+            } else if (status === 'completed') {
+                stepCard.classList.add('completed');
+                stepStatus.textContent = 'ดำเนินการเสร็จสิ้น';
+            }
+        }
+        
+        // ฟังก์ชันประมวลผลทั้งหมด
+        async function processData() {
+            if (!uploadedData) return;
+            
+            // รีเซ็ตขั้นตอนทั้งหมด
+            stepsData.forEach((step, index) => {
+                updateStepStatus(step.number, index === 0 ? 'active' : '');
+            });
+            
+            // แสดง loading
+            loadingSpinner.style.display = 'block';
+            processBtn.disabled = true;
+            
+            try {
+                // ขั้นตอนที่ 1: กำหนดเงื่อนไข (จำลอง)
+                await simulateProcessing(1);
+                updateStepStatus(1, 'completed');
+                updateStepStatus(2, 'active');
+                
+                // ขั้นตอนที่ 2: รับไฟล์ (ทำแล้ว)
+                await simulateProcessing(2);
+                updateStepStatus(2, 'completed');
+                updateStepStatus(3, 'active');
+                
+                // ขั้นตอนที่ 3: AI ตรวจสอบ
+                await simulateProcessing(3);
+                updateStepStatus(3, 'completed');
+                updateStepStatus(4, 'active');
+                
+                // ขั้นตอนที่ 4: AI แก้ไข
+                await simulateProcessing(4);
+                updateStepStatus(4, 'completed');
+                updateStepStatus(5, 'active');
+                
+                // ขั้นตอนที่ 5: AI สรุป
+                processedData = analyzeDataWithAI(uploadedData);
+                displayDataTable(processedData.data, processedData.issues);
+                
+                await simulateProcessing(5);
+                updateStepStatus(5, 'completed');
+                updateStepStatus(6, 'active');
+                
+                // ขั้นตอนที่ 6: Error Categorization
+                updateDashboard(processedData.issues);
+                
+                await simulateProcessing(6);
+                updateStepStatus(6, 'completed');
+                
+                // เปิดใช้งานปุ่มดาวน์โหลด
+                downloadBtn.disabled = false;
+                
+                // แสดงข้อมูลสรุป
+                showSummary(processedData.issues);
+            } catch (error) {
+                alert(`❌ เกิดข้อผิดพลาดในการประมวลผล: ${error.message}`);
+            } finally {
+                // ซ่อน loading
+                loadingSpinner.style.display = 'none';
+                processBtn.disabled = false;
+            }
+        }
+        
+        // ฟังก์ชันจำลองการประมวลผล
+        function simulateProcessing(stepNumber) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve();
+                }, 800);
+            });
+        }
+        
+        // ฟังก์ชันแสดงสรุป
+        function showSummary(issues) {
+            alert(`✅ AI ประมวลผลข้อมูลเสร็จสิ้น!\n\n📊 ผลการตรวจสอบ (จากตัวอย่าง ${issues.totalRows} แถว):\n- ข้อมูลว่าง: ${issues.emptyPercent}%\n- ข้อมูลซ้ำ: ${issues.duplicatePercent}%\n- รูปแบบผิด: ${issues.formatPercent}%\n- ข้อมูลถูกต้อง: ${issues.correctPercent}%\n\n💾 คุณสามารถดาวน์โหลดไฟล์ที่ clean แล้วได้เลย`);
+        }
+        
+        // ฟังก์ชันรีเซ็ต
+        function resetAll() {
+            uploadedData = null;
+            processedData = null;
+            allDataRows = [];
+            displayedColumns = [];
+            isEditMode = false;
+            editedCells.clear();
+            
+            dataPreview.style.display = 'none';
+            dashboardSection.classList.remove('show');
+            processBtn.disabled = true;
+            downloadBtn.disabled = true;
+            fileInfo.classList.remove('show');
+            columnSelector.classList.remove('show');
+            editControls.classList.remove('show');
+            editMessage.classList.remove('show');
+            loadingSpinner.style.display = 'none';
+            
+            // รีเซ็ตกราฟ
+            duplicateBar.style.width = '0%';
+            duplicateBar.textContent = '0%';
+            emptyBar.style.width = '0%';
+            emptyBar.textContent = '0%';
+            formatBar.style.width = '0%';
+            formatBar.textContent = '0%';
+            
+            // รีเซ็ตขั้นตอนทั้งหมด
+            stepsData.forEach(step => {
+                updateStepStatus(step.number, '');
+            });
+            
+            currentStep = 1;
+            updateStepStatus(1, 'active');
+        }
+        
+        // ฟังก์ชันจัดรูปแบบขนาดไฟล์
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Event Listeners
+        browseBtn.addEventListener('click', () => {
+            csvFileInput.click();
+        });
+        
+        uploadArea.addEventListener('click', () => {
+            csvFileInput.click();
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--primary-color)';
+            uploadArea.style.backgroundColor = 'rgba(76, 201, 240, 0.15)';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--accent-color)';
+            uploadArea.style.backgroundColor = 'rgba(76, 201, 240, 0.05)';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--accent-color)';
+            uploadArea.style.backgroundColor = 'rgba(76, 201, 240, 0.05)';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        csvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+        
+        async function handleFile(file) {
+            try {
+                // ตรวจสอบประเภทไฟล์
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    alert('กรุณาอัปโหลดไฟล์ CSV เท่านั้น');
+                    return;
+                }
+                
+                // ตรวจสอบขนาดไฟล์ (ปรับเป็น 100MB)
+                const maxSize = 100 * 1024 * 1024; // 100MB
+                if (file.size > maxSize) {
+                    alert('ไฟล์มีขนาดใหญ่เกินไป กรุณาอัปโหลดไฟล์ที่มีขนาดไม่เกิน 100MB');
+                    return;
+                }
+                
+                // แสดง loading
+                loadingSpinner.style.display = 'block';
+                processBtn.disabled = true;
+                
+                const csvContent = await readCSVFile(file);
+                uploadedData = parseCSV(csvContent);
+                
+                // แสดงข้อมูลไฟล์
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileRows.textContent = uploadedData.totalRows;
+                fileCols.textContent = uploadedData.headers.length;
+                fileInfo.classList.add('show');
+                
+                // สร้าง column selector
+                createColumnSelector(uploadedData.headers);
+                
+                // แสดงข้อมูลทั้งหมด (แสดงแค่ 50 คอลัมน์แรกเพื่อเริ่มต้น)
+                const initialColumns = uploadedData.headers.slice(0, 50);
+                displayDataTable(uploadedData, null, initialColumns);
+                displayedColumns = initialColumns;
+                
+                dataPreview.style.display = 'block';
+                processBtn.disabled = false;
+                
+                // อัพเดทขั้นตอน
+                updateStepStatus(1, 'active');
+                updateStepStatus(2, '');
+                
+                alert(`✅ โหลดไฟล์ "${file.name}" สำเร็จ\n📊 พบ ${uploadedData.totalRows} แถว, ${uploadedData.headers.length} คอลัมน์\n💡 ระบบแสดง ${initialColumns.length} คอลัมน์แรก (ใช้ปุ่มเลือกคอลัมน์เพื่อแสดงคอลัมน์ทั้งหมด)`);
+            } catch (error) {
+                alert(`❌ เกิดข้อผิดพลาด: ${error.message}`);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+        
+        processBtn.addEventListener('click', processData);
+        
+        resetBtn.addEventListener('click', resetAll);
+        
+        downloadBtn.addEventListener('click', () => {
+            if (uploadedData) {
+                // สร้างไฟล์ CSV จากข้อมูลทั้งหมด (รวมการแก้ไข)
+                let csvContent = '';
+                
+                // เขียน header
+                csvContent = uploadedData.headers.join(',') + '\n';
+                
+                // เขียนข้อมูลทั้งหมด
+                allDataRows.forEach(row => {
+                    const rowValues = uploadedData.headers.map(header => {
+                        // Escape commas in values
+                        let value = row[header] || '';
+                        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                            value = '"' + value.replace(/"/g, '""') + '"';
+                        }
+                        return value;
+                    });
+                    csvContent += rowValues.join(',') + '\n';
+                });
+                
+                // สร้าง Blob และดาวน์โหลด
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'cleaned_' + (fileName.textContent || 'data.csv'));
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert(`✅ ดาวน์โหลดไฟล์ cleaned_${fileName.textContent || 'data.csv'} สำเร็จ!\n\nไฟล์ประกอบด้วย:\n- ${uploadedData.totalRows} แถวข้อมูล\n- ${uploadedData.headers.length} คอลัมน์\n- รวมการแก้ไขทั้งหมดที่บันทึกแล้ว`);
+            }
+        });
+        
+        // Column selector controls
+        toggleColumnSelector.addEventListener('click', () => {
+            columnSelector.classList.toggle('show');
+        });
+        
+        selectAllColumns.addEventListener('click', () => {
+            document.querySelectorAll('.column-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+        
+        deselectAllColumns.addEventListener('click', () => {
+            document.querySelectorAll('.column-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+        
+        applyColumnSelection.addEventListener('click', () => {
+            const selectedColumns = [];
+            document.querySelectorAll('.column-checkbox').forEach((checkbox, index) => {
+                if (checkbox.checked) {
+                    selectedColumns.push(uploadedData.headers[index]);
+                }
+            });
+            
+            if (selectedColumns.length === 0) {
+                alert('กรุณาเลือกคอลัมน์อย่างน้อย 1 คอลัมน์');
+                return;
+            }
+            
+            displayedColumns = selectedColumns;
+            
+            if (processedData) {
+                displayDataTable(processedData.data, processedData.issues, selectedColumns);
+            } else {
+                displayDataTable(uploadedData, null, selectedColumns);
+            }
+            
+            columnSelector.classList.remove('show');
+            
+            // ถ้าโหมดแก้ไขเปิดอยู่ ให้เปิดใหม่
+            if (isEditMode) {
+                setTimeout(() => {
+                    enableEditMode();
+                }, 100);
+            }
+        });
+        
+        // Edit mode controls
+        toggleEditMode.addEventListener('click', () => {
+            if (isEditMode) {
+                disableEditMode();
+            } else {
+                enableEditMode();
+            }
+        });
+        
+        saveAllBtn.addEventListener('click', saveAllEdits);
+        
+        cancelEditBtn.addEventListener('click', cancelAllEdits);
+        
+        // เปิดขั้นตอนแรกเมื่อคลิก
+        document.querySelectorAll('.step-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const stepNumber = parseInt(header.dataset.step);
+                const stepCard = document.getElementById(`step-${stepNumber}`);
+                
+                // ปิดขั้นตอนอื่นๆ
+                document.querySelectorAll('.step-card').forEach(card => {
+                    if (card !== stepCard) {
+                        card.classList.remove('active');
+                    }
+                });
+                
+                // เปิด/ปิดขั้นตอนที่คลิก
+                stepCard.classList.toggle('active');
+            });
+        });
+        
+        // เริ่มต้นเปิดขั้นตอนที่ 1
+        updateStepStatus(1, 'active');
+    </script>
+</body>
+</html>
+  
